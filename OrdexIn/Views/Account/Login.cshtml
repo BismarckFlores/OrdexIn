@@ -28,6 +28,9 @@
                     <input asp-for="Password" id="Password" name="Password" type="password" required autocomplete="current-password" placeholder=" ">
                     <label asp-for="Password">Contraseña</label>
                     <span class="input-line"></span>
+                    <div class="form-group mt-1">
+                        <a asp-action="ForgotPassword" class="toggle-link">¿Olvidaste tu contraseña?</a>
+                    </div>
                 </div>
                 <span asp-validation-for="Password" class="text-danger" id="pwdError"></span>
             </div>

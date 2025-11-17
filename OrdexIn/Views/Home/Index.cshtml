@@ -5,4 +5,20 @@
 <div class="text-center">
     <h1 class="display-4">Welcome</h1>
     <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    @if (User.IsInRole("admin"))
+    {
+        <p>You are logged in as @(User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? User.Identity?.Name ?? "unknown")</p>
+    }
+    
+    <button id="logoutBtn" class="btn btn-primary" type="button">Cerrar session</button>
+
+    @* Hidden form only to emit antiforgery token into the DOM *@
+    <form id="logoutTokenForm" method="post" asp-controller="Account" asp-action="Logout" style="display:none;">
+        @Html.AntiForgeryToken()
+    </form>
+    
 </div>
+
+@section Scripts {
+    <script src="~/js/logout.js"></script>
+}
