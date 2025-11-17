@@ -1,9 +1,18 @@
-﻿namespace OrdexIn.Models
+﻿using Supabase.Postgrest.Attributes;
+using Supabase.Postgrest.Models;
+
+namespace OrdexIn.Models
 {
-    public class Inventario
+    [Table("inventario_minimo")]
+    public class InventarioMinimo : BaseModel
     {
-        public int IdInventario { get; set; }
+        [PrimaryKey("id_inventario_minimo", false)]
+        public int IdInventarioMinimo { get; set; }
+
+        [Column("id_producto")]
         public int IdProducto { get; set; }
+
+        [Column("cantidad_minima")]
         public int CantidadMinima { get; set; }
     }
 }
