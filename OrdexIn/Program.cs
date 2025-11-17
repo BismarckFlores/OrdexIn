@@ -1,3 +1,6 @@
+using Microsoft.AspNetCore.Mvc;
+using OrdexIn.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -15,6 +18,7 @@ builder.Services.AddScoped<Supabase.Client>(_ =>
         }
     )
 );
+
 
 var app = builder.Build();
 
