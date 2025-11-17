@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using OrdexIn.Services;
 using Supabase;
 using System.Security.Claims;
 
@@ -8,14 +9,14 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// Cookies de Autenticación
+// Authentication cookies
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
         options.LoginPath = "/login";
     });
 
-// Requisito de autenticación global
+// Global authorization requirement
 builder.Services.AddAuthorization(options =>
 {
     options.FallbackPolicy = new AuthorizationPolicyBuilder()
@@ -23,17 +24,23 @@ builder.Services.AddAuthorization(options =>
         .Build();
 });
 
-// Otros servicios
+// Other services
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddTransient<Client>(serviceProvider =>
 {
     var httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
     var httpContext = httpContextAccessor.HttpContext;
+
     var config = builder.Configuration;
+    var supabaseUrl = config["Supabase:Url"];
+    var supabaseKey = config["Supabase:Key"];
 
-    var accessToken = httpContext?.User?.FindFirstValue("access_token");
-    var supabaseClient = new Client(config["Supabase:Url"], config["Supabase:Key"], new Supabase.SupabaseOptions { /* ... */ });
+    if (string.IsNullOrWhiteSpace(supabaseUrl) || string.IsNullOrWhiteSpace(supabaseKey))
+        throw new InvalidOperationException("Supabase configuration is missing. Set 'Supabase:Url' and 'Supabase:Key'.");
 
+    var supabaseClient = new Client(supabaseUrl, supabaseKey, new SupabaseOptions { /* ... */ });
+
+    var accessToken = httpContext?.User.FindFirstValue("AccessToken");
     if (!string.IsNullOrEmpty(accessToken))
     {
         supabaseClient.Auth.SetSession(accessToken, string.Empty);
@@ -42,7 +49,9 @@ builder.Services.AddTransient<Client>(serviceProvider =>
     return supabaseClient;
 });
 
-
+// Custom services DI registration
+builder.Services.AddScoped<IAppSignInService, AppSignInService>();
+builder.Services.AddScoped<IAuthService, SupabaseAuthService>();
 
 var app = builder.Build();
 
@@ -50,11 +59,12 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
+
 app.UseRouting();
 
 app.UseAuthentication();
@@ -66,6 +76,5 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
-
 
 app.Run();
