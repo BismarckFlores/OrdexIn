@@ -1,60 +1,113 @@
-﻿// Lógica de Login/Sign Up y Validación - wwwroot/js/login-toggle.js
-
+﻿// File: OrdexIn/wwwroot/js/signup-validation.js
 document.addEventListener('DOMContentLoaded', function () {
-    const authForm = document.getElementById('authForm');
+    const form = document.getElementById('authForm');
+    if (!form) return;
 
-    // Solo necesitamos estos elementos si la página es la de Registro (SignUp)
-    if (authForm) {
-        const passwordInput = document.getElementById('Password');
-        const confirmPasswordInput = document.getElementById('ConfirmPassword');
+    const email = document.getElementById('Email');
+    const pwd = document.getElementById('Password');
+    const confirmPwd = document.getElementById('ConfirmPassword');
 
-        // Usamos los IDs de los <span> donde mostramos los errores
-        const passwordError = document.getElementById('pwdError');
-        const confirmError = document.getElementById('confirmError');
+    // target validation spans rendered by tag helpers
+    const emailError = document.querySelector('span[data-valmsg-for="Email"]');
+    const pwdError = document.getElementById('pwdError') || document.querySelector('span[data-valmsg-for="Password"]');
+    const confirmError = document.getElementById('confirmError') || document.querySelector('span[data-valmsg-for="ConfirmPassword"]');
+    const submitBtn = document.getElementById('submitBtn');
 
-        // ===================================================
-        // Función de validación de fortaleza de contraseña
-        // ===================================================
-        function isStrongClient(pwd) {
-            if (!pwd || pwd.length < 8) return { ok: false, msg: "Al menos 8 caracteres." };
-            if (!/[A-Z]/.test(pwd)) return { ok: false, msg: "Al menos una mayúscula." };
-            if (!/[a-z]/.test(pwd)) return { ok: false, msg: "Al menos una minúscula." };
-            if (!/[0-9]/.test(pwd)) return { ok: false, msg: "Al menos un dígito." };
-            if (!/[^A-Za-z0-9]/.test(pwd)) return { ok: false, msg: "Al menos un carácter especial." };
-            return { ok: true, msg: "" };
+    function isStrong(password) {
+        if (!password) return { lengthOk: false, upperOk: false, lowerOk: false, digitOk: false, specialOk: false };
+        const lengthOk = password.length >= 8;
+        const upperOk = /[A-Z]/.test(password);
+        const lowerOk = /[a-z]/.test(password);
+        const digitOk = /[0-9]/.test(password);
+        const specialOk = /[^A-Za-z0-9]/.test(password); // at least one non-alphanumeric
+        return { lengthOk, upperOk, lowerOk, digitOk, specialOk };
+    }
+
+    function isEmailValid(value) {
+        if (!value) return false;
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(value);
+    }
+
+    function updateValidation() {
+        const emailVal = email ? email.value.trim() : '';
+        const pw = pwd ? pwd.value : '';
+        const check = isStrong(pw);
+        const missing = [];
+
+        // email checks
+        if (emailError) {
+            if (!emailVal) {
+                emailError.textContent = 'Email es requerido';
+            } else if (!isEmailValid(emailVal)) {
+                emailError.textContent = 'Email no válido';
+            } else {
+                emailError.textContent = '';
+            }
         }
 
-        // ===================================================
-        // Listener para la validación al enviar el formulario
-        // ===================================================
-        authForm.addEventListener('submit', function (e) {
+        // password strength checks
+        if (!check.lengthOk) missing.push('Al menos 8 caracteres');
+        if (!check.upperOk) missing.push('Una letra mayúscula');
+        if (!check.lowerOk) missing.push('Una letra minúscula');
+        if (!check.digitOk) missing.push('Un número');
+        if (!check.specialOk) missing.push('Al menos un carácter especial');
 
-            const pwd = passwordInput.value;
-            const confirmPwd = confirmPasswordInput.value;
-            const pwdResult = isStrongClient(pwd);
-
-            // Limpiar errores
-            passwordError.textContent = '';
-            confirmError.textContent = '';
-            let hasError = false;
-
-            // 1. Verificar fortaleza
-            if (!pwdResult.ok) {
-                e.preventDefault();
-                passwordError.textContent = 'Contraseña débil: ' + pwdResult.msg;
-                hasError = true;
+        if (pwdError) {
+            if (missing.length) {
+                pwdError.innerHTML = '<strong>Faltan:</strong><ul style="margin:6px 0 0 18px;padding:0;">' +
+                    missing.map(m => `<li style="margin:2px 0;">${m}</li>`).join('') + '</ul>';
+            } else {
+                pwdError.textContent = '';
             }
+        }
 
-            // 2. Verificar coincidencia
-            if (pwd !== confirmPwd) {
-                e.preventDefault();
-                confirmError.textContent = 'Las contraseñas no coinciden.';
-                hasError = true;
+        // confirm password
+        if (confirmPwd && confirmError) {
+            if (confirmPwd.value && confirmPwd.value !== pw) {
+                confirmError.textContent = 'Las contraseñas no coinciden';
+            } else {
+                confirmError.textContent = '';
             }
+        }
 
-            return !hasError;
-
-             // Permite el envío al servidor
-        });
+        const emailOk = !emailError || emailError.textContent === '';
+        const formValid = emailOk && missing.length === 0 && (!confirmPwd || confirmPwd.value === pw);
+        if (submitBtn) submitBtn.disabled = !formValid;
+        return formValid;
     }
+
+    // initial state
+    if (submitBtn) submitBtn.disabled = true;
+    updateValidation();
+
+    if (email) email.addEventListener('input', updateValidation);
+    if (pwd) pwd.addEventListener('input', updateValidation);
+    if (confirmPwd) confirmPwd.addEventListener('input', updateValidation);
+
+    // toggle password visibility buttons
+    document.querySelectorAll('.show-pwd-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const input = btn.closest('.input-wrapper').querySelector('input');
+            if (!input) return;
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.setAttribute('aria-pressed', 'true');
+                btn.innerHTML = '🙈';
+            } else {
+                input.type = 'password';
+                btn.setAttribute('aria-pressed', 'false');
+                btn.innerHTML = '👁';
+            }
+        });
+    });
+
+    form.addEventListener('submit', function (e) {
+        if (!updateValidation()) {
+            e.preventDefault();
+            if (email && email.value.trim() === '') email.focus();
+            else if (pwd && pwd.value.length < 8) pwd.focus();
+            else if (confirmPwd && confirmPwd.value !== (pwd ? pwd.value : '')) confirmPwd.focus();
+        }
+    });
 });

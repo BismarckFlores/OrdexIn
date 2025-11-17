@@ -3,45 +3,47 @@
     ViewData["Title"] = "Inicio de Sesión";
 }
 
-<div class = "auth-container">
-    <h4 id = "authTitle" class = "text-center mb-4">Iniciar sesión</h4>
-    <p id = "authSubtitle" class= "text-center text-muted mb-4">'Ingresa a tu cuenta para continuar.'</p>
-    <hr class = "mb-4" />
-    
-    <form method = "post" id = "authForm" asp-action="ProcessLogin" novalidate>
-        <div asp-validation-summary = "ModelOnly" class = "text-danger alert alert-danger" role = "alert"></div>
+<div class="auth-wrapper">
+    <div class = "auth-container">
+        <h4 id = "authTitle" class = "text-center mb-4">Iniciar sesión</h4>
+        <p id = "authSubtitle" class= "text-center mb-4">'Ingresa a tu cuenta para continuar.'</p>
+        <hr class = "mb-4" />
         
-        @* Campo del Email *@
-        <div class="form-group">
-            <div class = "input-wrapper">
-                <input asp-for="Email" id="Email" name="Email" type="email" required autocomplete="email" placeholder=" ">
-                <label asp-for="Email">Email</label>
-                <span class="input-line"></span>
+        <form method = "post" id = "authForm" asp-action="ProcessLogin" novalidate>
+            <div asp-validation-summary = "ModelOnly" class = "text-danger alert alert-danger" role = "alert"></div>
+            
+            @* Campo del Email *@
+            <div class="form-group">
+                <div class = "input-wrapper">
+                    <input asp-for="Email" id="Email" name="Email" type="email" required autocomplete="email" placeholder=" ">
+                    <label asp-for="Email">Email</label>
+                    <span class="input-line"></span>
+                </div>
+                <span asp-validation-for="Email" class="text-danger"></span>
             </div>
-            <span asp-validation-for="Email" class="text-danger"></span>
-        </div>
-        
-        @* Campo de la Contraseña *@
-        <div class="form-group">
-            <div class = "input-wrapper">
-                <input asp-for="Password" id="Password" name="Password" type="password" required autocomplete="current-password" placeholder=" ">
-                <label asp-for="Password">Contraseña</label>
-                <span class="input-line"></span>
+            
+            @* Campo de la Contraseña *@
+            <div class="form-group">
+                <div class = "input-wrapper">
+                    <input asp-for="Password" id="Password" name="Password" type="password" required autocomplete="current-password" placeholder=" ">
+                    <label asp-for="Password">Contraseña</label>
+                    <span class="input-line"></span>
+                </div>
+                <span asp-validation-for="Password" class="text-danger" id="pwdError"></span>
             </div>
-            <span asp-validation-for="Password" class="text-danger" id="pwdError"></span>
-        </div>
-        
-        @* Botón de Envío *@
-        <div class="form-group mt-4 d-grid gap-2">
-            <button type="submit" class="btn btn-primary btn-lg">Iniciar Sesión</button>
-        </div>
-    </form>
-</div>
+            
+            @* Botón de Envío *@
+            <div class="form-group mt-4 d-grid gap-2">
+                <button type="submit" class="btn btn-primary btn-lg">Iniciar Sesión</button>
+            </div>
+        </form>
+    </div>
 
-@* Link al signup *@
-<div class="text-center mt-3 login-link-alt">
-    <p id="toggleText" class="text-muted">
-        ¿No tienes cuenta? 
-        <a asp-action="Register" class="toggle-link">Regístrate aquí</a>
-    </p>
-</div> 
+    @* Link al signup *@
+    <div class="text-center mt-1 login-link-alt">
+        <p id="toggleText">
+            ¿No tienes cuenta? 
+            <a asp-action="Register" class="toggle-link">Regístrate aquí</a>
+        </p>
+    </div> 
+</div>

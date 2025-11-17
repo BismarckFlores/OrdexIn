@@ -7,10 +7,10 @@
     
     @* 1. CSS Base y Custom *@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css"/>
-    <link rel="stylesheet" href="~/css/account.css"/>
+    <link rel="stylesheet" href="~/css/account.css" asp-append-version="true"/>
     
     @* Permite que las vistas inyecten CSS adicional en el <head> *@
-    @await RenderSectionAsync("styles", required: false);
+    @await RenderSectionAsync("styles", required: false)
 </head>
 <body>
     <div class = "main-container">
@@ -20,6 +20,6 @@
     @* Seccion de Scripts *@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    @await RenderSectionAsync("Scripts", required: false);
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

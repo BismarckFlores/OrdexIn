@@ -137,7 +137,7 @@ namespace OrdexIn.Controllers
                 && password.Any(char.IsUpper)
                 && password.Any(char.IsLower)
                 && password.Any(char.IsDigit)
-                && password.All(char.IsLetterOrDigit);
+                && password.Any(ch => !char.IsLetterOrDigit(ch));
         }
     }
 }
