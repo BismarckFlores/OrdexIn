@@ -1,7 +1,7 @@
 ﻿namespace OrdexIn.Services
 {
     using OrdexIn.Models;
-    public class InventarioMinimoService
+    public class InventarioMinimoDao
     {
         public Inventario Crear(int idProducto, int cantidadMinima)
         {
