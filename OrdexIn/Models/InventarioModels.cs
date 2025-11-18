@@ -3,11 +3,11 @@ using Supabase.Postgrest.Models;
 
 namespace OrdexIn.Models
 {
-    [Table("inventario_minimo")]
+    [Table("inventario")]
     public class InventarioMinimo : BaseModel
     {
-        [PrimaryKey("id_inventario_minimo", false)]
-        public int IdInventarioMinimo { get; set; }
+        [PrimaryKey("id_inventario", false)]
+        public int IdInventario { get; set; }
 
         [Column("id_producto")]
         public int IdProducto { get; set; }

@@ -42,7 +42,7 @@ namespace OrdexIn.Services
             var result = await _client
                 .From<InventarioMinimo>()
                 .Select("*")
-                .Where(i => i.IdInventarioMinimo == id)
+                .Where(i => i.IdInventario == id)
                 .Get();
 
             return result.Models?.FirstOrDefault();
@@ -63,7 +63,7 @@ namespace OrdexIn.Services
         {
             await _client
                 .From<InventarioMinimo>()
-                .Where(i => i.IdInventarioMinimo == item.IdInventarioMinimo)
+                .Where(i => i.IdInventario == item.IdInventario)
                 .Update(item);
         }
 
@@ -72,7 +72,7 @@ namespace OrdexIn.Services
         {
             await _client
                 .From<InventarioMinimo>()
-                .Where(i => i.IdInventarioMinimo == id)
+                .Where(i => i.IdInventario == id)
                 .Delete();
         }
 

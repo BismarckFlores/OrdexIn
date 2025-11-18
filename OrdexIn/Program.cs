@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using OrdexIn.Controllers;
 using OrdexIn.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,6 +19,9 @@ builder.Services.AddScoped<Supabase.Client>(_ =>
         }
     )
 );
+
+builder.Services.AddScoped<InventarioMinimoDao>();
+
 
 
 var app = builder.Build();
