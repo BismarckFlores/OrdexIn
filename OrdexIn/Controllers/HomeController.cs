@@ -5,7 +5,7 @@ using OrdexIn.Models;
 
 namespace OrdexIn.Controllers
 {
-    [Authorize] // Se requiere autenticación para acceder a este controlador
+    [Authorize] // Se requiere autenticaciï¿½n para acceder a este controlador
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
@@ -16,11 +16,6 @@ namespace OrdexIn.Controllers
         }
 
         public IActionResult Index()
-        {
-            return View();
-        }
-
-        public IActionResult Privacy()
         {
             return View();
         }
