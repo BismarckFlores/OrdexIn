@@ -20,6 +20,7 @@ builder.Services.AddScoped<Supabase.Client>(_ =>
 builder.Services.AddSingleton<OrdexIn.Services.IInventarioService, OrdexIn.Services.InMemoryInventarioService>();
 builder.Services.AddSingleton<OrdexIn.Services.IReporteService, OrdexIn.Services.InMemoryReporteService>();
 builder.Services.AddSingleton<OrdexIn.Services.IAuditService, OrdexIn.Services.InMemoryAuditService>();
+builder.Services.AddSingleton<OrdexIn.Services.IKardexService, OrdexIn.Services.InMemoryKardexService>();
 
 var app = builder.Build();
 

@@ -1,132 +1,125 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Logging;
-using OrdexIn.Models;
-using OrdexIn.Services;
+﻿@model OrdexIn.Models.ViewModels.KardexViewModel
 
-namespace OrdexIn.Pages.Reportes
-{
-    public class KardexModel : PageModel
-    {
-        private readonly ILogger<KardexModel>
-    _logger;
-    private readonly IReporteService? _reporteService;
+@{
+    ViewData["Title"] = "Kardex";
+}
 
-    public KardexModel(ILogger<KardexModel>
-        logger, IReporteService? reporteService = null)
-        {
-        _logger = logger;
-        _reporteService = reporteService;
-        }
+<h2 class="mt-3">Kardex - Movimientos de Inventario</h2>
 
-        [FromRoute(Name = "idProducto")]
-        public int IdProducto { get; set; }
+<form method="get" class="mb-4 mt-3">
 
-        [BindProperty(SupportsGet = true)]
-        public DateTime? Desde { get; set; }
-
-        [BindProperty(SupportsGet = true)]
-        public DateTime? Hasta { get; set; }
-
-        public List<KardexRow>
-            Movimientos { get; set; } = new();
-
-            public decimal SaldoActual { get; set; }
-
-            public async Task<IActionResult>
-                OnGetAsync(int idProducto)
+    <div class="row">
+        <div class="col-md-3">
+            <label>Producto</label>
+            <select name="idProducto" class="form-control">
+                <option value="">-- Seleccionar --</option>
+                @foreach (var p in Model.Productos)
                 {
-                IdProducto = idProducto;
-
-                IEnumerable<MovimientoModel>
-                    rawMovs = Enumerable.Empty<MovimientoModel>
-                        ();
-
-                        try
-                        {
-                        if (_reporteService is not null)
-                        {
-                        // Se asume que IReporteService tiene un método como:
-                        // Task<IEnumerable<MovimientoModel>> GetMovimientosAsync(int productoId, DateTime? desde, DateTime? hasta)
-                    // Ajusta el nombre/síntesis si tu interfaz difiere.
-                    var method = _reporteService.GetType().GetMethod("GetMovimientosAsync");
-                    if (method != null)
-                    {
-                        var task = method.Invoke(_reporteService, new object[] { IdProducto, Desde, Hasta }) as Task;
-                        if (task != null)
-                        {
-                            await task.ConfigureAwait(false);
-                            var resultProp = task.GetType().GetProperty("Result");
-                            if (resultProp != null)
-                            {
-                                var result = resultProp.GetValue(task) as IEnumerable<MovimientoModel>;
-                                if (result != null) rawMovs = result;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // Intentar un método sin Async (sin await)
-                        var method2 = _reporteService.GetType().GetMethod("GetMovimientos");
-                        if (method2 != null)
-                        {
-                            var result = method2.Invoke(_reporteService, new object[] { IdProducto, Desde, Hasta }) as IEnumerable<MovimientoModel>;
-                            if (result != null) rawMovs = result;
-                        }
-                    }
+                    <option value="@p.IdProducto"
+                            selected="@(Model.IdProducto == p.IdProducto)">
+                        @p.NombreProducto
+                    </option>
                 }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "No se pudo obtener movimientos desde IReporteService. Se continuará con lista vacía.");
-            }
+            </select>
+        </div>
 
-            // Ordenar por fecha ascendente para cálculo de saldo acumulado
-            var ordered = rawMovs.OrderBy(m => m.Fecha).ToList();
+        <div class="col-md-3">
+            <label>Fecha inicio</label>
+            <input type="date" name="inicio" class="form-control"
+                   value="@Model.FechaInicio?.ToString("yyyy-MM-dd")">
+        </div>
 
-            decimal running = 0m;
-            var rows = new List<KardexRow>();
+        <div class="col-md-3">
+            <label>Fecha fin</label>
+            <input type="date" name="fin" class="form-control"
+                   value="@Model.FechaFin?.ToString("yyyy-MM-dd")">
+        </div>
 
-            foreach (var m in ordered)
-            {
-                decimal cantidad = Convert.ToDecimal(m.Cantidad);
-                // Determina si el movimiento suma o resta. Ajusta esta lógica según tus valores reales en m.Tipo.
-                bool esIngreso = !string.IsNullOrEmpty(m.Tipo) &&
-                                 (m.Tipo.Contains("ingreso", StringComparison.OrdinalIgnoreCase) ||
-                                  m.Tipo.Contains("entrada", StringComparison.OrdinalIgnoreCase) ||
-                                  m.Tipo.Contains("compra", StringComparison.OrdinalIgnoreCase));
+        <div class="col-md-3 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+        </div>
+    </div>
+</form>
 
-                running += esIngreso ? cantidad : -cantidad;
+<hr />
 
-                rows.Add(new KardexRow
-                {
-                    Fecha = m.Fecha,
-                    Tipo = m.Tipo,
-                    Cantidad = cantidad,
-                    SaldoResultante = running,
-                    Usuario = m.Usuario,
-                    Observacion = m.Observacion
-                });
-            }
+@if (Model.IdProducto == null)
+{
+    <p class="text-muted">Seleccione un producto para ver el kardex.</p>
+    return;
+}
 
-            Movimientos = rows;
-            SaldoActual = running;
+<!-- ====================== -->
+<!-- MOVIMIENTOS DEL KARDEX -->
+<!-- ====================== -->
 
-            return Page();
-        }
+<h4 class="mt-3">Historial de Movimientos</h4>
 
-        public class KardexRow
+<table class="table table-bordered table-striped mt-3">
+    <thead class="table-dark">
+        <tr>
+            <th>Fecha</th>
+            <th>Tipo</th>
+            <th>Cantidad</th>
+            <th>Saldo Resultante</th>
+            <th>Usuario</th>
+            <th>Observación</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var m in Model.Movimientos)
         {
-            public DateTime Fecha { get; set; }
-            public string? Tipo { get; set; }
-            public decimal Cantidad { get; set; }
-            public decimal SaldoResultante { get; set; }
-            public string? Usuario { get; set; }
-            public string? Observacion { get; set; }
+            <tr>
+                <td>@m.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                <td>@m.Tipo</td>
+                <td>@m.Cantidad</td>
+                <td>@m.SaldoResultante</td>
+                <td>@m.Usuario</td>
+                <td>@m.Observacion</td>
+            </tr>
         }
-    }
+        }
+    </tbody>
+</table>
+
+<hr />
+
+<!-- =============== -->
+<!-- REPORTE VENTAS -->
+<!-- =============== -->
+
+<h2 class="mt-5">Reporte Financiero - Ventas</h2>
+
+@if (Model.FechaInicio != null && Model.FechaFin != null)
+{
+    <h5>Total vendido: <strong>@Model.TotalVentas.ToString("C")</strong></h5>
+    <h5>Transacciones: <strong>@Model.TotalTransacciones</strong></h5>
+
+    <table class="table table-bordered table-hover mt-3">
+        <thead class="table-dark">
+            <tr>
+                <th>ID Venta</th>
+                <th>Fecha</th>
+                <th>Total</th>
+                <th>Usuario</th>
+                <th>Detalles</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var v in Model.Ventas)
+            {
+                <tr>
+                    <td>@v.IdVenta</td>
+                    <td>@v.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@v.Total.ToString("C")</td>
+                    <td>@v.Usuario</td>
+                    <td>@v.Detalles</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p class="text-muted">Seleccione un rango de fechas para ver las ventas.</p>
 }
