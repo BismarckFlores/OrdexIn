@@ -3,7 +3,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// Supabe integration
+// Supabase integration
 builder.Services.AddScoped<Supabase.Client>(_ =>
     new Supabase.Client(
         builder.Configuration["Supabase:Url"],
@@ -15,6 +15,11 @@ builder.Services.AddScoped<Supabase.Client>(_ =>
         }
     )
 );
+
+// Registrar servicios de auditoría, inventario y reportes (implementaciones en memoria para prototipado)
+builder.Services.AddSingleton<OrdexIn.Services.IInventarioService, OrdexIn.Services.InMemoryInventarioService>();
+builder.Services.AddSingleton<OrdexIn.Services.IReporteService, OrdexIn.Services.InMemoryReporteService>();
+builder.Services.AddSingleton<OrdexIn.Services.IAuditService, OrdexIn.Services.InMemoryAuditService>();
 
 var app = builder.Build();
 

@@ -1,0 +1,22 @@
+﻿@page
+@model OrdexIn.Pages.Categorias.CreateModel
+@{
+    ViewData["Title"] = "Crear Categoría";
+}
+
+<h1>Crear Categoría</h1>
+
+<form method="post">
+    <div class="mb-3">
+        <label asp-for="Categoria.NombreCategoria" class="form-label"></label>
+        <input asp-for="Categoria.NombreCategoria" class="form-control" />
+        <span asp-validation-for="Categoria.NombreCategoria" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Categoria.Descripcion" class="form-label"></label>
+        <input asp-for="Categoria.Descripcion" class="form-control" />
+        <span asp-validation-for="Categoria.Descripcion" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-primary">Crear</button>
+    <a asp-page="Index" class="btn btn-secondary">Cancelar</a>
+</form>

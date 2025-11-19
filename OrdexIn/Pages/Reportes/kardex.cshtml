@@ -1,0 +1,132 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Logging;
+using OrdexIn.Models;
+using OrdexIn.Services;
+
+namespace OrdexIn.Pages.Reportes
+{
+    public class KardexModel : PageModel
+    {
+        private readonly ILogger<KardexModel>
+    _logger;
+    private readonly IReporteService? _reporteService;
+
+    public KardexModel(ILogger<KardexModel>
+        logger, IReporteService? reporteService = null)
+        {
+        _logger = logger;
+        _reporteService = reporteService;
+        }
+
+        [FromRoute(Name = "idProducto")]
+        public int IdProducto { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public DateTime? Desde { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public DateTime? Hasta { get; set; }
+
+        public List<KardexRow>
+            Movimientos { get; set; } = new();
+
+            public decimal SaldoActual { get; set; }
+
+            public async Task<IActionResult>
+                OnGetAsync(int idProducto)
+                {
+                IdProducto = idProducto;
+
+                IEnumerable<MovimientoModel>
+                    rawMovs = Enumerable.Empty<MovimientoModel>
+                        ();
+
+                        try
+                        {
+                        if (_reporteService is not null)
+                        {
+                        // Se asume que IReporteService tiene un método como:
+                        // Task<IEnumerable<MovimientoModel>> GetMovimientosAsync(int productoId, DateTime? desde, DateTime? hasta)
+                    // Ajusta el nombre/síntesis si tu interfaz difiere.
+                    var method = _reporteService.GetType().GetMethod("GetMovimientosAsync");
+                    if (method != null)
+                    {
+                        var task = method.Invoke(_reporteService, new object[] { IdProducto, Desde, Hasta }) as Task;
+                        if (task != null)
+                        {
+                            await task.ConfigureAwait(false);
+                            var resultProp = task.GetType().GetProperty("Result");
+                            if (resultProp != null)
+                            {
+                                var result = resultProp.GetValue(task) as IEnumerable<MovimientoModel>;
+                                if (result != null) rawMovs = result;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Intentar un método sin Async (sin await)
+                        var method2 = _reporteService.GetType().GetMethod("GetMovimientos");
+                        if (method2 != null)
+                        {
+                            var result = method2.Invoke(_reporteService, new object[] { IdProducto, Desde, Hasta }) as IEnumerable<MovimientoModel>;
+                            if (result != null) rawMovs = result;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "No se pudo obtener movimientos desde IReporteService. Se continuará con lista vacía.");
+            }
+
+            // Ordenar por fecha ascendente para cálculo de saldo acumulado
+            var ordered = rawMovs.OrderBy(m => m.Fecha).ToList();
+
+            decimal running = 0m;
+            var rows = new List<KardexRow>();
+
+            foreach (var m in ordered)
+            {
+                decimal cantidad = Convert.ToDecimal(m.Cantidad);
+                // Determina si el movimiento suma o resta. Ajusta esta lógica según tus valores reales en m.Tipo.
+                bool esIngreso = !string.IsNullOrEmpty(m.Tipo) &&
+                                 (m.Tipo.Contains("ingreso", StringComparison.OrdinalIgnoreCase) ||
+                                  m.Tipo.Contains("entrada", StringComparison.OrdinalIgnoreCase) ||
+                                  m.Tipo.Contains("compra", StringComparison.OrdinalIgnoreCase));
+
+                running += esIngreso ? cantidad : -cantidad;
+
+                rows.Add(new KardexRow
+                {
+                    Fecha = m.Fecha,
+                    Tipo = m.Tipo,
+                    Cantidad = cantidad,
+                    SaldoResultante = running,
+                    Usuario = m.Usuario,
+                    Observacion = m.Observacion
+                });
+            }
+
+            Movimientos = rows;
+            SaldoActual = running;
+
+            return Page();
+        }
+
+        public class KardexRow
+        {
+            public DateTime Fecha { get; set; }
+            public string? Tipo { get; set; }
+            public decimal Cantidad { get; set; }
+            public decimal SaldoResultante { get; set; }
+            public string? Usuario { get; set; }
+            public string? Observacion { get; set; }
+        }
+    }
+}
