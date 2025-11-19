@@ -24,18 +24,6 @@ namespace OrdexIn.Services
             return result.Models ?? new List<InventarioMinimo>();
         }
 
-        // Obtener por producto
-        public async Task<InventarioMinimo?> ObtenerPorProducto(int idProducto)
-        {
-            var result = await _client
-                .From<InventarioMinimo>()
-                .Select("*")
-                .Where(i => i.IdProducto == idProducto)
-                .Get();
-
-            return result.Models?.FirstOrDefault();
-        }
-
         // Obtener por ID
         public async Task<InventarioMinimo?> ObtenerPorId(int id)
         {
@@ -48,6 +36,18 @@ namespace OrdexIn.Services
             return result.Models?.FirstOrDefault();
         }
 
+        // Obtener por producto
+        public async Task<List<InventarioMinimo>> ObtenerPorProducto(int idProducto)
+        {
+            var result = await _client
+                .From<InventarioMinimo>()
+                .Select("*")
+                .Where(i => i.IdProducto == idProducto)
+                .Get();
+
+            return result.Models ?? new List<InventarioMinimo>();
+        }
+
         // Insertar
         public async Task<InventarioMinimo?> Insertar(InventarioMinimo item)
         {
@@ -58,7 +58,7 @@ namespace OrdexIn.Services
             return result.Models?.FirstOrDefault();
         }
 
-        // Actualizar (SUPABASE UPDATE = void en algunas versiones)
+        // Actualizar
         public async Task Actualizar(InventarioMinimo item)
         {
             await _client
@@ -67,7 +67,7 @@ namespace OrdexIn.Services
                 .Update(item);
         }
 
-        // Eliminar (SUPABASE DELETE = void en algunas versiones)
+        // Eliminar
         public async Task Eliminar(int id)
         {
             await _client
@@ -76,11 +76,12 @@ namespace OrdexIn.Services
                 .Delete();
         }
 
-        // Regla de negocio: calcular inventario mínimo recomendado
-        public int CalcularInventarioMinimo(int ventasPromedioMensuales)
+        // Regla de negocio: Calcular mínimo sugerido según precio, demanda o cantidad actual
+        public int CalcularInventarioMinimo(int ventasPromMensuales)
         {
-            int minimo = (int)Math.Ceiling(ventasPromedioMensuales * 0.20);
-            return Math.Max(minimo, 1);
+            // Regla sencilla
+            int min = (int)Math.Ceiling(ventasPromMensuales * 0.20);
+            return Math.Max(min, 1);
         }
     }
 }
