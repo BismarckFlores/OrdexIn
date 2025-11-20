@@ -20,8 +20,9 @@ builder.Services.AddScoped<Supabase.Client>(_ =>
     )
 );
 
-builder.Services.AddScoped<InventarioMinimoDao>();
+builder.Services.AddScoped<ProductDao>();
 
+builder.Services.AddScoped<PuntoVentaDao>();
 
 
 var app = builder.Build();
