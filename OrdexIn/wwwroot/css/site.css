@@ -1,31 +1,366 @@
-html {
-  font-size: 14px;
+@import url('account.css'); /* Importa colores, fuentes, y reset base */
+
+/* =================================================== */
+/* ===== 0. Estilos de layout global (Flexbox) ===== */
+/* =================================================== */
+
+html, body {
+  overflow-x: hidden;
 }
 
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
+/* 🔑 CLAVE: Contenedor principal que usa Flexbox para Sidebar + Contenido */
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+:root {
+  --sidebar-width: 250px;
+  --sidebar-collapsed: 70px;
+  --main-padding: 30px;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* =================================================== */
+/* ===== 1. Sidebar (Barra lateral) - MODIFICADO ===== */
+/* =================================================== */
+
+.sidebar {
+  /* Estilos estáticos */
+  width: var(--sidebar-width);
+  min-width: var(--sidebar-width);
+  background-color: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 20px 15px 10px;
+  z-index: 1000;
+
+  /* 🔑 CLAVE: Usar Flexbox para empujar el logout al fondo */
+  display: flex;
+  flex-direction: column;
+
+  /* Transición para plegar/desplegar */
+  transition: width 0.3s ease-in-out;
+
+  /* Posicionamiento y Scroll */
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.sidebar-header {
+  margin-bottom: 20px;
+  padding: 0 5px;
+  text-align: center;
+  transition: opacity 0.3s ease;
+}
+
+/* Estilo para el estado PLEGADO (Solo Íconos - 70px) */
+.sidebar.collapsed {
+  width: var(--sidebar-collapsed);
+  min-width: var(--sidebar-collapsed);
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+/* Ocultar el texto y logo cuando está colapsado */
+.sidebar.collapsed .sidebar-header,
+.sidebar.collapsed .nav-item span,
+.sidebar.collapsed .btn-logout span {
+  display: none;
+}
+
+/* Asegura que los íconos se mantengan centrados */
+.sidebar.collapsed .nav-item a,
+.sidebar.collapsed .btn-logout {
+  padding: 12px 0px;
+  justify-content: center;
+}
+
+/* Quita el margen derecho de los íconos cuando la sidebar está colapsada */
+.sidebar.collapsed .nav-item a i,
+.sidebar.collapsed .btn-logout i {
+  margin-right: 0;
+}
+
+body.sidebar-closed .sidebar {
+  width: var(--sidebar-collapsed);
+  min-width: var(--sidebar-collapsed);
+}
+
+/* =================================================== */
+/* ===== 2. Sidebar Toggler (Botón de Abrir/Cerrar) ===== */
+/* =================================================== */
+
+.sidebar-toggler {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  background-color: var(--primary);
+  color: var(--text);
+  border: none;
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  line-height: 1;
+  margin-top: 12px;
+  transition: background-color 0.2s ease, transform  0.2s ease, padding 0.2s ease;
+  z-index: 1001;
+  box-shadow: none;
+}
+
+.sidebar-toggler:hover {
+  background-color: var(--primary-700);
+}
+
+.sidebar-toggler i {
+  font-size: 16px;
+}
+
+.sidebar:not(.collapsed) .sidebar-toggler {
+  justify-content: flex-start;
+  padding-left: 12px;
+  background-color: rgba(255,255,255,0.04); /* subtle background when open */
+  color: var(--text);
+}
+
+.sidebar.collapsed .sidebar-toggler {
+  height: 44px;
+  padding: 8px;
+  border-radius: 10px;
+}
+
+/* Ensure toggler stays visible on small screens */
+@media (max-width: 768px) {
+  .sidebar-toggler {
+    position: relative;
+    top: 0;
+    left: 0;
+    transform: none;
+    width: 100%;
   }
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+/* =================================================== */
+/* ===== 3. Sidebar Nav Items - (Estilo YouTube) ===== */
+/* =================================================== */
+
+.nav-menu-top {
+  flex-grow: 1;
 }
 
-html {
-  position: relative;
-  min-height: 100%;
+.nav-item a {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  margin-bottom: 2px;
+  text-decoration: none;
+  color: var(--text);
+  border-radius: 10px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  font-weight: 500;
 }
 
-body {
-  margin-bottom: 60px;
+.nav-item a:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--text);
 }
 
-.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-  color: var(--bs-secondary-color);
-  text-align: end;
+.nav-item a.active {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: var(--text);
+  font-weight: 600;
 }
 
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-  text-align: start;
+.nav-item a i {
+  margin-right: 15px;
+  font-size: 20px;
+}
+
+/* ======================================================= */
+/* ===== 4. Logout Fijo (Pegado al fondo de la Sidebar) ===== */
+/* ======================================================= */
+
+.sidebar-footer {
+  padding-top: 15px;
+  border-top: 1px solid var(--border);
+  width: 100%;
+  margin-top: auto; /* Fuerza el footer al final con flexbox */
+  padding-bottom: 5px;
+}
+
+.btn-logout {
+  display: flex;
+  width: 100%;
+  padding: 10px 15px;
+  text-align: left;
+  background-color: transparent;
+  border: none;
+  color: var(--text);
+  font-weight: 500;
+  border-radius: 10px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-logout:hover {
+  background-color: rgba(255, 255, 255, 0.08); /* Mismo hover que los nav-items */
+  color: var(--text);
+}
+
+/* =================================================== */
+/* ===== 5. Main Content y Responsividad ===== */
+/* =================================================== */
+
+.main-content {
+  flex-grow: 1;
+  transition: margin-left 0.3s ease-in-out;
+  margin-left: var(--sidebar-width); /* Ancho completo de la sidebar */
+  /* NUEVO: Espaciado extra si lo necesitas, pero el padding ya ayuda */
+  padding: var(--main-padding);
+}
+
+body.sidebar-closed .main-content {
+  margin-left: var(--sidebar-collapsed); /* Ancho de la sidebar colapsada */
+}
+
+/* Responsive: Ajustes para pantallas pequeñas */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    height: 100vh;
+    margin-left: -1px;
+  }
+  body.sidebar-open .sidebar {
+    margin-left: 0;
+  }
+  .main-content {
+    margin-left: 0;
+    width: 100%;
+    padding: calc(var(--main-padding) * 0.9);
+  }
+  body.sidebar-closed .main-content {
+    margin-left: var(--sidebar-collapsed);
+  }
+}
+
+
+/* =================================================== */
+/* ===== 6. Dashboard Grid y Cards ===== */
+/* =================================================== */
+
+.summary-grid + .dashboard-grid .card {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.summary-grid + .dashboard-grid .card-title {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.summary-grid + .dashboard-grid hr {
+  margin-top: 8px;
+  margin-bottom: 12px;
+  opacity: 0.08;
+}
+
+/* Estructura de Cuadrícula para la Dashboard */
+.dashboard-grid {
+  display: grid;
+  /* Define 4 columnas por defecto. Cambia a 1fr para que sean iguales. */
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px; /* Espacio entre las tarjetas */
+  margin-bottom: 30px;
+}
+
+/* Tarjeta Base */
+.card {
+  background-color: var(--surface); /* Superficie/Card: gray-900 */
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+}
+
+.card-title {
+  color: var(--muted);
+  font-size: 14px;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.card-value {
+  color: var(--text);
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 0;
+}
+
+/* Tarjeta de Resumen (Pequeñas estadísticas) */
+.summary-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.summary-icon {
+  font-size: 32px;
+  padding: 10px;
+  border-radius: 8px;
+  /* Usaremos el color primario para destacar el ícono */
+  background-color: rgba(99, 102, 241, 0.1);
+  color: var(--primary);
+}
+
+/* Tarjetas de Gráficos/Listas (Ocupan más espacio) */
+/* Por ejemplo, hacer que ocupe 2 columnas */
+.card.span-2 {
+  grid-column: span 2;
+}
+/* Ocupar el ancho */
+.card.span-3 {
+  grid-column: span 3;
+}
+
+/* Responsive: Ajustes para pantallas pequeñas */
+@media (max-width: 1200px) {
+  .dashboard-grid {
+    /* Pasa de 4 a 2 columnas */
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .card.span-2, .card.span-3 {
+    /* En pantallas más pequeñas, todos ocupan el ancho completo */
+    grid-column: span 2;
+  }
+}
+@media (max-width: 768px) {
+  .summary-grid + .dashboard-grid .card-title {
+    font-size: 16px;
+  }
+  
+  .dashboard-grid {
+    /* Pasa de 2 a 1 columna */
+    grid-template-columns: 1fr;
+  }
+  .card.span-2, .card.span-3 {
+    grid-column: span 1;
+  }
 }
