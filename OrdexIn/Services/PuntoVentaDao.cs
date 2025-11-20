@@ -6,94 +6,118 @@ namespace OrdexIn.Services
 {
     public class PuntoVentaDao
     {
-        private readonly Client _SupabaseClient;
+        private readonly Client _client;
+        private const int MaxRetry = 3;
 
         public PuntoVentaDao(Client client)
         {
-            _SupabaseClient = client;
+            _client = client;
         }
 
-       
-        public async Task<(bool exito, string mensaje)> ProcesarVenta(int productId, int cantidadVendida)
+        // Obtener inventario ordenado por fecha
+        public async Task<List<Product>> ObtenerInventario(int idProducto)
         {
-            
-            var response = await _SupabaseClient
-                .From<Product>()
-                .Select("*")
-                .Where(p => p.Id == productId)
-                .Get();
+            int intentos = 0;
 
-            var product = response.Models?.FirstOrDefault();
+            while (intentos < MaxRetry)
+            {
+                try
+                {
+                    var result = await _client
+                        .From<Product>()
+                        .Select("*")
+                        .Where(p => p.Id == idProducto)
+                        .Order(p => p.ExpirationDate, Supabase.Postgrest.Constants.Ordering.Ascending)
+                        .Get();
 
-            if (product == null)
-                return (false, "Producto no encontrado.");
+                    return result.Models ?? new List<Product>();
+                }
+                catch (Exception ex)
+                {
+                    intentos++;
+                    Console.WriteLine($"[ERROR] ObtenerInventario: {ex.Message}");
 
-            
-            if (cantidadVendida <= 0)
-                return (false, "La cantidad vendida debe ser mayor a 0.");
+                    if (intentos == MaxRetry)
+                        return new List<Product>();
+                }
+            }
 
-            if (product.Stock < cantidadVendida)
-                return (false, "Stock insuficiente para completar la venta.");
-
-           
-            if (product.ExpirationDate < DateTime.UtcNow)
-                return (false, "El producto está caducado y NO puede venderse.");
-
-           
-            product.Stock -= cantidadVendida;
-
-            await _SupabaseClient
-                .From<Product>()
-                .Where(p => p.Id == product.Id)
-                .Update(product);
-
-            return (true, "Venta procesada correctamente.");
+            return new List<Product>();
         }
 
-        
-        public async Task<List<Product>> ObtenerProductosCaducados()
+        // Registrar venta con FIFO y caducidad
+        public async Task<string> RegistrarVenta(int idProducto, int cantidad)
         {
-            var response = await _SupabaseClient.From<Product>().Select("*").Get();
+            try
+            {
+                var inventario = await ObtenerInventario(idProducto);
 
-            return response.Models?
-                .Where(p => p.ExpirationDate < DateTime.UtcNow)
-                .ToList() ?? new List<Product>();
+                if (!inventario.Any())
+                    return "Producto no encontrado.";
+
+                int restante = cantidad;
+
+                foreach (var lote in inventario)
+                {
+                    if (lote.ExpirationDate.HasValue &&
+                        lote.ExpirationDate.Value < DateTime.UtcNow)
+                        continue; // ignora caducados
+
+                    if (lote.Stock >= restante)
+                    {
+                        lote.Stock -= restante;
+
+                        if (!await ActualizarProductoSeguro(lote))
+                            return "Error actualizando el inventario.";
+
+                        return "Venta realizada con éxito.";
+                    }
+                    else
+                    {
+                        restante -= lote.Stock;
+                        lote.Stock = 0;
+
+                        if (!await ActualizarProductoSeguro(lote))
+                            return "Error actualizando el inventario.";
+                    }
+                }
+
+                return "No hay suficiente inventario disponible.";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] RegistrarVenta: {ex.Message}");
+                return "Error interno al procesar la venta.";
+            }
         }
 
-        
-        public async Task<List<Product>> ObtenerProximosACaducar(int dias)
+        // Método auxiliar seguro para actualizar productos
+        private async Task<bool> ActualizarProductoSeguro(Product item)
         {
-            var now = DateTime.UtcNow;
-            var limite = now.AddDays(dias);
+            int intentos = 0;
 
-            var response = await _SupabaseClient.From<Product>().Select("*").Get();
+            while (intentos < MaxRetry)
+            {
+                try
+                {
+                    await _client
+                        .From<Product>()
+                        .Where(p => p.Id == item.Id)
+                        .Update(item);
 
-            return response.Models?
-                .Where(p => p.ExpirationDate >= now && p.ExpirationDate <= limite)
-                .ToList() ?? new List<Product>();
-        }
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    intentos++;
+                    Console.WriteLine($"[ERROR] ActualizarProductoSeguro: {ex.Message}");
 
-        
-        public async Task<(decimal total, string mensaje)> CalcularTotal(int productId, int cantidad)
-        {
-            var response = await _SupabaseClient
-                .From<Product>()
-                .Select("*")
-                .Where(p => p.Id == productId)
-                .Get();
+                    if (intentos == MaxRetry)
+                        return false;
+                }
+            }
 
-            var product = response.Models?.FirstOrDefault();
-
-            if (product == null)
-                return (0, "Producto no encontrado.");
-
-            if (cantidad <= 0)
-                return (0, "Cantidad inválida.");
-
-            if (cantidad > product.Stock)
-                return (0, "Cantidad excede el stock disponible.");
-
-            return (product.Price * cantidad, "OK");
+            return false;
         }
     }
 }
