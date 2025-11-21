@@ -4,120 +4,132 @@ using Supabase.Interfaces;
 
 namespace OrdexIn.Services
 {
-    public class PuntoVentaDao
+    namespace OrdexIn.Services
     {
-        private readonly Client _client;
-        private const int MaxRetry = 3;
-
-        public PuntoVentaDao(Client client)
+        public class PuntoVentaDao
         {
-            _client = client;
-        }
+            private readonly Client _SupabaseClient;
+            private const int MaxRetry = 3;
 
-        // Obtener inventario ordenado por fecha
-        public async Task<List<Product>> ObtenerInventario(int idProducto)
-        {
-            int intentos = 0;
-
-            while (intentos < MaxRetry)
+            public PuntoVentaDao(Client client)
             {
-                try
-                {
-                    var result = await _client
-                        .From<Product>()
-                        .Select("*")
-                        .Where(p => p.Id == idProducto)
-                        .Order(p => p.ExpirationDate, Supabase.Postgrest.Constants.Ordering.Ascending)
-                        .Get();
-
-                    return result.Models ?? new List<Product>();
-                }
-                catch (Exception ex)
-                {
-                    intentos++;
-                    Console.WriteLine($"[ERROR] ObtenerInventario: {ex.Message}");
-
-                    if (intentos == MaxRetry)
-                        return new List<Product>();
-                }
+                _SupabaseClient = client;
             }
 
-            return new List<Product>();
-        }
-
-        // Registrar venta con FIFO y caducidad
-        public async Task<string> RegistrarVenta(int idProducto, int cantidad)
-        {
-            try
+            // ==========================================================
+            // 1. Obtener Inventario en orden FIFO
+            // ==========================================================
+            public async Task<List<ProductModel>> GetInventoryFIFO(int idProducto)
             {
-                var inventario = await ObtenerInventario(idProducto);
+                int intentos = 0;
 
-                if (!inventario.Any())
-                    return "Producto no encontrado.";
-
-                int restante = cantidad;
-
-                foreach (var lote in inventario)
+                while (intentos < MaxRetry)
                 {
-                    if (lote.ExpirationDate.HasValue &&
-                        lote.ExpirationDate.Value < DateTime.UtcNow)
-                        continue; // ignora caducados
-
-                    if (lote.Stock >= restante)
+                    try
                     {
-                        lote.Stock -= restante;
+                        var result = await _SupabaseClient
+                            .From<ProductModel>()
+                            .Where(p => p.Id == idProducto)
+                            .Order(p => p.ExpirationDate,
+                                   Supabase.Postgrest.Constants.Ordering.Ascending)
+                            .Get();
 
-                        if (!await ActualizarProductoSeguro(lote))
-                            return "Error actualizando el inventario.";
-
-                        return "Venta realizada con éxito.";
+                        return result.Models ?? new List<ProductModel>();
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        restante -= lote.Stock;
-                        lote.Stock = 0;
+                        intentos++;
+                        Console.WriteLine($"[ERROR] GetInventoryFIFO(): {ex.Message}");
 
-                        if (!await ActualizarProductoSeguro(lote))
-                            return "Error actualizando el inventario.";
+                        if (intentos == MaxRetry)
+                            return new List<ProductModel>();
                     }
                 }
 
-                return "No hay suficiente inventario disponible.";
+                return new List<ProductModel>();
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[ERROR] RegistrarVenta: {ex.Message}");
-                return "Error interno al procesar la venta.";
-            }
-        }
 
-        // Método auxiliar seguro para actualizar productos
-        private async Task<bool> ActualizarProductoSeguro(Product item)
-        {
-            int intentos = 0;
-
-            while (intentos < MaxRetry)
+            // ==========================================================
+            // 2. Registrar Venta (FIFO + Caducidad)
+            // ==========================================================
+            public async Task<string> RegisterSale(int idProducto, int cantidad)
             {
                 try
                 {
-                    await _client
-                        .From<Product>()
-                        .Where(p => p.Id == item.Id)
-                        .Update(item);
+                    var inventario = await GetInventoryFIFO(idProducto);
 
-                    return true;
+                    if (!inventario.Any())
+                        return "Producto no encontrado.";
+
+                    int restante = cantidad;
+
+                    foreach (var lote in inventario)
+                    {
+                        // Saltar lotes vencidos
+                        if (lote.ExpirationDate.HasValue &&
+                            lote.ExpirationDate.Value < DateTime.UtcNow)
+                            continue;
+
+                        // Si el lote cubre todo
+                        if (lote.Stock >= restante)
+                        {
+                            lote.Stock -= restante;
+
+                            if (!await SafeUpdate(lote))
+                                return "Error al actualizar el inventario.";
+
+                            return "Venta registrada con éxito.";
+                        }
+                        else
+                        {
+                            // Usar todo el lote
+                            restante -= lote.Stock;
+                            lote.Stock = 0;
+
+                            if (!await SafeUpdate(lote))
+                                return "Error al actualizar el inventario.";
+                        }
+                    }
+
+                    return "Stock insuficiente.";
                 }
                 catch (Exception ex)
                 {
-                    intentos++;
-                    Console.WriteLine($"[ERROR] ActualizarProductoSeguro: {ex.Message}");
-
-                    if (intentos == MaxRetry)
-                        return false;
+                    Console.WriteLine($"[ERROR] RegisterSale(): {ex.Message}");
+                    return "Error interno al procesar la venta.";
                 }
             }
 
-            return false;
+            // ==========================================================
+            // 3. Safe Update (modo seguro con reintentos)
+            // ==========================================================
+            private async Task<bool> SafeUpdate(ProductModel producto)
+            {
+                int intentos = 0;
+
+                while (intentos < MaxRetry)
+                {
+                    try
+                    {
+                        await _SupabaseClient
+                            .From<ProductModel>()
+                            .Where(p => p.Id == producto.Id)
+                            .Update(producto);
+
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        intentos++;
+                        Console.WriteLine($"[ERROR] SafeUpdate(): {ex.Message}");
+
+                        if (intentos == MaxRetry)
+                            return false;
+                    }
+                }
+
+                return false;
+            }
         }
     }
 }

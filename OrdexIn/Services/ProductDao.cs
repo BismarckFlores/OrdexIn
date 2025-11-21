@@ -9,16 +9,16 @@ namespace OrdexIn.Services
 {
     public class ProductDao
     {
-        private readonly Client _client;
+        private readonly Client _SupabaseClient;
         private const int MaxRetry = 3;
 
         public ProductDao(Client client)
         {
-            _client = client;
+            _SupabaseClient = client;
         }
 
-        // Obtener todos
-        public async Task<List<Product>> ObtenerTodos()
+        // CREATE
+        public async Task<ProductModel?> Create(ProductModel producto)
         {
             int intentos = 0;
 
@@ -26,47 +26,16 @@ namespace OrdexIn.Services
             {
                 try
                 {
-                    var result = await _client
-                        .From<Product>()
-                        .Select("*")
-                        .Get();
+                    var result = await _SupabaseClient
+                        .From<ProductModel>()
+                        .Insert(producto);
 
-                    return result.Models ?? new List<Product>();
+                    return result.Models.FirstOrDefault();
                 }
                 catch (Exception ex)
                 {
                     intentos++;
-                    Console.WriteLine($"[ERROR] ObtenerTodos Falló: {ex.Message}");
-
-                    if (intentos == MaxRetry)
-                        return new List<Product>();
-                }
-            }
-
-            return new List<Product>();
-        }
-
-        // Obtener por ID
-        public async Task<Product?> ObtenerPorId(int id)
-        {
-            int intentos = 0;
-
-            while (intentos < MaxRetry)
-            {
-                try
-                {
-                    var result = await _client
-                        .From<Product>()
-                        .Select("*")
-                        .Where(p => p.Id == id)
-                        .Get();
-
-                    return result.Models?.FirstOrDefault();
-                }
-                catch (Exception ex)
-                {
-                    intentos++;
-                    Console.WriteLine($"[ERROR] ObtenerPorId Falló: {ex.Message}");
+                    Console.WriteLine($"[ERROR] Crear(): {ex.Message}");
                     if (intentos == MaxRetry)
                         return null;
                 }
@@ -75,8 +44,8 @@ namespace OrdexIn.Services
             return null;
         }
 
-        // Actualizar producto
-        public async Task<bool> Actualizar(Product item)
+        // READ - Todos
+        public async Task<List<ProductModel>> GetAll()
         {
             int intentos = 0;
 
@@ -84,17 +53,101 @@ namespace OrdexIn.Services
             {
                 try
                 {
-                    await _client
-                        .From<Product>()
-                        .Where(p => p.Id == item.Id)
-                        .Update(item);
+                    var result = await _SupabaseClient
+                        .From<ProductModel>()
+                        .Select("*")
+                        .Get();
+
+                    return result.Models ?? new List<ProductModel>();
+                }
+                catch (Exception ex)
+                {
+                    intentos++;
+                    Console.WriteLine($"[ERROR] ObtenerTodos(): {ex.Message}");
+                    if (intentos == MaxRetry)
+                        return new List<ProductModel>();
+                }
+            }
+
+            return new List<ProductModel>();
+        }
+
+        // READ - Por ID
+        public async Task<ProductModel?> GetForId(int id)
+        {
+            int intentos = 0;
+
+            while (intentos < MaxRetry)
+            {
+                try
+                {
+                    var result = await _SupabaseClient
+                        .From<ProductModel>()
+                        .Where(p => p.Id == id)
+                        .Get();
+
+                    return result.Models.FirstOrDefault();
+                }
+                catch (Exception ex)
+                {
+                    intentos++;
+                    Console.WriteLine($"[ERROR] ObtenerPorId(): {ex.Message}");
+                    if (intentos == MaxRetry)
+                        return null;
+                }
+            }
+
+            return null;
+        }
+
+        // UPDATE
+        public async Task<bool> Update(ProductModel producto)
+        {
+            int intentos = 0;
+
+            while (intentos < MaxRetry)
+            {
+                try
+                {
+                    await _SupabaseClient
+                        .From<ProductModel>()
+                        .Where(p => p.Id == producto.Id)
+                        .Update(producto);
 
                     return true;
                 }
                 catch (Exception ex)
                 {
                     intentos++;
-                    Console.WriteLine($"[ERROR] Actualizar Falló: {ex.Message}");
+                    Console.WriteLine($"[ERROR] Actualizar(): {ex.Message}");
+                    if (intentos == MaxRetry)
+                        return false;
+                }
+            }
+
+            return false;
+        }
+
+        // DELETE
+        public async Task<bool> Delete(int id)
+        {
+            int intentos = 0;
+
+            while (intentos < MaxRetry)
+            {
+                try
+                {
+                    await _SupabaseClient
+                        .From<ProductModel>()
+                        .Where(p => p.Id == id)
+                        .Delete();
+
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    intentos++;
+                    Console.WriteLine($"[ERROR] Eliminar(): {ex.Message}");
                     if (intentos == MaxRetry)
                         return false;
                 }

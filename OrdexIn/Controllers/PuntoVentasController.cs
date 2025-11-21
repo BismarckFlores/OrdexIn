@@ -2,20 +2,25 @@
 using Microsoft.AspNetCore.Mvc;
 using OrdexIn.Models;
 using OrdexIn.Services;
+using OrdexIn.Services.OrdexIn.Services;
 
 namespace OrdexIn.Controllers
 {
     [Authorize]
-    public class ProductController : Controller
+    public class PuntoVentasController : Controller
     {
+        private readonly PuntoVentaDao _puntoVentaDao;
         private readonly ProductDao _productDao;
 
-        public ProductController(ProductDao productDao)
+        public PuntoVentasController(PuntoVentaDao puntoVentaDao, ProductDao productDao)
         {
+            _puntoVentaDao = puntoVentaDao;
             _productDao = productDao;
         }
 
-        // GET: ProductController
+        // ==========================================================
+        // INDEX – Visualización general del módulo Punto de Venta
+        // ==========================================================
         public async Task<ActionResult> Index()
         {
             try
@@ -30,78 +35,78 @@ namespace OrdexIn.Controllers
             }
         }
 
-        // GET: ProductController/Details/5
+        // ==========================================================
+        // DETALLES – Ver inventario FIFO del producto
+        // ==========================================================
         public async Task<ActionResult> Details(int id)
         {
             try
             {
                 var producto = await _productDao.GetForId(id);
-
                 if (producto == null)
                     return NotFound();
 
-                return View(producto);
+                var inventario = await _puntoVentaDao.GetInventoryFIFO(id);
+
+                ViewBag.Producto = producto;
+                return View(inventario);
             }
             catch (Exception ex)
             {
-                ViewBag.Error = "Error cargando el producto: " + ex.Message;
+                ViewBag.Error = "Error cargando detalles del producto: " + ex.Message;
                 return View();
             }
         }
 
-        // GET: ProductController/Create
-        public ActionResult Create()
+        // ==========================================================
+        // REALIZAR VENTA – Formulario
+        // ==========================================================
+        public async Task<ActionResult> Create()
         {
-            return View();
+            var productos = await _productDao.GetAll();
+            return View(productos);
         }
 
-        // POST: ProductController/Create
+        // ==========================================================
+        // REALIZAR VENTA – Procesamiento
+        // ==========================================================
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Create(ProductModel producto)
+        public async Task<ActionResult> Create(int idProducto, int cantidad)
         {
             try
             {
-                if (!ModelState.IsValid)
-                    return View(producto);
-
-                var creado = await _productDao.Create(producto);
-
-                if (creado == null)
+                if (cantidad <= 0)
                 {
-                    ViewBag.Error = "No se pudo crear el producto.";
-                    return View(producto);
+                    ViewBag.Error = "La cantidad debe ser mayor a 0.";
+                    return View(await _productDao.GetAll());
                 }
 
-                return RedirectToAction(nameof(Index));
+                var resultado = await _puntoVentaDao.RegisterSale(idProducto, cantidad);
+
+                ViewBag.Mensaje = resultado;
+
+                return RedirectToAction(nameof(Details), new { id = idProducto });
             }
             catch (Exception ex)
             {
-                ViewBag.Error = "Error creando el producto: " + ex.Message;
-                return View(producto);
+                ViewBag.Error = "Error procesando la venta: " + ex.Message;
+                return View(await _productDao.GetAll());
             }
         }
 
-        // GET: ProductController/Edit/5
+        // ==========================================================
+        // EDIT – (No aplica directamente para ventas, pero se deja base)
+        // ==========================================================
         public async Task<ActionResult> Edit(int id)
         {
-            try
-            {
-                var producto = await _productDao.GetForId(id);
+            var producto = await _productDao.GetForId(id);
+            if (producto == null)
+                return NotFound();
 
-                if (producto == null)
-                    return NotFound();
-
-                return View(producto);
-            }
-            catch (Exception ex)
-            {
-                ViewBag.Error = "Error cargando producto para edición: " + ex.Message;
-                return View();
-            }
+            return View(producto);
         }
 
-        // POST: ProductController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Edit(int id, ProductModel producto)
@@ -131,26 +136,18 @@ namespace OrdexIn.Controllers
             }
         }
 
-        // GET: ProductController/Delete/5
+        // ==========================================================
+        // DELETE – (No aplica directamente; se deja por compatibilidad)
+        // ==========================================================
         public async Task<ActionResult> Delete(int id)
         {
-            try
-            {
-                var producto = await _productDao.GetForId(id);
+            var producto = await _productDao.GetForId(id);
+            if (producto == null)
+                return NotFound();
 
-                if (producto == null)
-                    return NotFound();
-
-                return View(producto);
-            }
-            catch (Exception ex)
-            {
-                ViewBag.Error = "Error cargando producto para eliminación: " + ex.Message;
-                return View();
-            }
+            return View(producto);
         }
 
-        // POST: ProductController/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Delete(int id, ProductModel producto)
