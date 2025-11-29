@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.SignalR;
+using OrdexIn.Hubs;
 using Supabase;
 using OrdexIn.Models;
 using OrdexIn.Services.Intefaces;
@@ -10,12 +12,14 @@ namespace OrdexIn.Services
 {
     public class ProductDao : IProductService
     {
+        private readonly IHubContext<InventoryHub> _hubContext;
         private readonly Client _client;
         private const int MaxRetry = 3;
 
-        public ProductDao(Client client)
+        public ProductDao(Client client, IHubContext<InventoryHub> hubContext /*, ... */)
         {
             _client = client;
+            _hubContext = hubContext;
         }
 
         // Obtener todos
@@ -108,6 +112,7 @@ namespace OrdexIn.Services
                         .From<Product>()
                         .Insert(item);
 
+                    await BroadcastStatsUpdateAsync();
                     return true;
                 }
                 catch (Exception ex)
@@ -135,6 +140,7 @@ namespace OrdexIn.Services
                         .Where(p => p.Id == item.Id)
                         .Update(item);
 
+                    await BroadcastStatsUpdateAsync();
                     return true;
                 }
                 catch (Exception ex)
@@ -162,6 +168,7 @@ namespace OrdexIn.Services
                         .Where(p => p.Id == id)
                         .Delete();
 
+                    await BroadcastStatsUpdateAsync();
                     return true;
                 }
                 catch (Exception ex)
@@ -209,6 +216,20 @@ namespace OrdexIn.Services
             var prodList = await GetAllProductsAsync();
             
             return prodList?.Sum(p => p.Stock) ?? 0;
+        }
+        
+        private async Task BroadcastStatsUpdateAsync()
+        {
+            var products = await GetAllProductsAsync();
+            var stats = new InventoryStats
+            {
+                TotalProducts = products.Count,
+                TotalStock = products.Sum(p => p.Stock),
+                TotalInventoryValue = products.Sum(p => p.Stock * p.Price),
+                LowStockCount = products.Count(p => p.Stock < 10),
+                LastUpdatedUtc = DateTime.UtcNow
+            };
+            await _hubContext.Clients.All.SendAsync("InventoryUpdated", stats);
         }
     }
 }

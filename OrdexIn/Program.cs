@@ -3,12 +3,16 @@ using Microsoft.AspNetCore.Authorization;
 using OrdexIn.Services;
 using Supabase;
 using System.Security.Claims;
+using OrdexIn.Hubs;
 using OrdexIn.Services.Intefaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// SignalR
+builder.Services.AddSignalR();
 
 // Authentication cookies
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -53,6 +57,7 @@ builder.Services.AddTransient<Client>(serviceProvider =>
 // Custom services DI registration
 builder.Services.AddScoped<IAppSignInService, AppSignInService>();
 builder.Services.AddScoped<IAuthService, SupabaseAuthService>();
+builder.Services.AddScoped<IProductService, ProductDao>();
 builder.Services.AddScoped<IPointOfSaleService, PointSaleDAO>();
 builder.Services.AddScoped<IKardexDataService, KardexDAO>();
 
@@ -79,5 +84,8 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
+
+app.MapControllers();
+app.MapHub<InventoryHub>("/inventoryHub");
 
 app.Run();

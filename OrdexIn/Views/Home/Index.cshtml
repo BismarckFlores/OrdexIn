@@ -8,11 +8,20 @@
 <hr class="mb-5" />
 
 <div class="dashboard-grid summary-grid">
-    
+    <div class="card summary-card">
+        <div>
+            <div class="card-title">Total de Productos</div>
+            <p class="card-value"><span id="productsCount">—</span></p>
+        </div>
+        <div class="summary-icon">
+            <i class="fas fa-boxes"></i>
+        </div>
+    </div>
+
     <div class="card summary-card">
         <div>
             <div class="card-title">Productos en Stock</div>
-            <p class="card-value">1,245</p>
+            <p class="card-value"><span id="stockCount">—</span></p>
         </div>
         <div class="summary-icon">
             <i class="fas fa-cubes"></i>
@@ -22,7 +31,7 @@
     <div class="card summary-card">
         <div>
             <div class="card-title">Valor del Inventario</div>
-            <p class="card-value">$145,980</p>
+            <p class="card-value"><span id="inventoryValue">—</span></p>
         </div>
         <div class="summary-icon" style="color: #10b981; background-color: rgba(16, 185, 129, 0.1);">
             <i class="fas fa-dollar-sign"></i>
@@ -32,7 +41,7 @@
     <div class="card summary-card">
         <div>
             <div class="card-title">Productos con bajo stock</div>
-            <p class="card-value" style="color: var(--danger);">18</p>
+            <p class="card-value" style="color: var(--danger);"><span id="lowStockCount">—</span></p>
         </div>
         <div class="summary-icon" style="color: var(--danger); background-color: rgba(239, 68, 68, 0.1);">
             <i class="fas fa-exclamation-triangle"></i>
@@ -42,11 +51,11 @@
 
 <div class="dashboard-grid">
     
-    <div class="card span-2">
+    <div class="card span-3">
         <h5 class="card-title" style="color: var(--text);">Ventas Mensuales</h5>
         <hr style="opacity: 0.1;" />
         
-        <div style="height: 250px; background-color: var(--surface-2); display: flex; align-items: center; justify-content: center; color: var(--muted); border-radius: 6px;">
+        <div id="monthlyChart" style="height: 250px; background-color: var(--surface-2); display: flex; align-items: center; justify-content: center; color: var(--muted); border-radius: 6px;">
             [Aquí iría el gráfico de Chart.js o similar]
         </div>
     </div>
@@ -63,9 +72,13 @@
         </ul>
     </div>
     
-    <div class="card span-3">
+    <div class="card span-4">
         <h5 class="card-title" style="color: var(--text);">Alertas y Notificaciones</h5>
         <p style="color: var(--muted); font-size: 14px; margin-bottom: 0;">No hay productos críticos agotados. El sistema está operando normalmente.</p>
     </div>
-    
 </div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js" asp-append-version="true"></script>
+    <script src="~/js/dashboard.js" asp-append-version="true"></script>
+}

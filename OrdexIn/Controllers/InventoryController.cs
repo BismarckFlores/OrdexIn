@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace OrdexIn.Controllers
 {
-    public class ProductController : Controller
+    public class InventoryController : Controller
     {
         // GET: ProductController
         public ActionResult Index()

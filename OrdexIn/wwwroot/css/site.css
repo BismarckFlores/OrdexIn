@@ -279,8 +279,8 @@ body.sidebar-closed .main-content {
 /* Estructura de Cuadrícula para la Dashboard */
 .dashboard-grid {
   display: grid;
-  /* Define 4 columnas por defecto. Cambia a 1fr para que sean iguales. */
-  grid-template-columns: repeat(3, 1fr);
+  /* 🔑 CAMBIO CLAVE: 4 columnas para alinear tarjetas de resumen y la cuadrícula inferior */
+  grid-template-columns: repeat(4, 1fr);
   gap: 20px; /* Espacio entre las tarjetas */
   margin-bottom: 30px;
 }
@@ -335,9 +335,13 @@ body.sidebar-closed .main-content {
 .card.span-2 {
   grid-column: span 2;
 }
-/* Ocupar el ancho */
+/* Ocupar 3 columnas de 4 (para la cuadrícula inferior 1 + 3) */
 .card.span-3 {
   grid-column: span 3;
+}
+
+.card.span-4 {
+    grid-column: span 4;
 }
 
 /* Responsive: Ajustes para pantallas pequeñas */
@@ -355,7 +359,7 @@ body.sidebar-closed .main-content {
   .summary-grid + .dashboard-grid .card-title {
     font-size: 16px;
   }
-  
+
   .dashboard-grid {
     /* Pasa de 2 a 1 columna */
     grid-template-columns: 1fr;
