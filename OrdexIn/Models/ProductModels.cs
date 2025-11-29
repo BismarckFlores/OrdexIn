@@ -25,8 +25,5 @@ namespace OrdexIn.Models
         [Column("created_at")]
         public DateTime CreatedAt { get; set; }
 
-        [Column("expiration_date")]
-        public DateTime? ExpirationDate { get; set; }
-
     }
 }

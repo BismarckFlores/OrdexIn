@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using OrdexIn.Services;
 using Supabase;
 using System.Security.Claims;
+using OrdexIn.Services.Intefaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,6 +53,8 @@ builder.Services.AddTransient<Client>(serviceProvider =>
 // Custom services DI registration
 builder.Services.AddScoped<IAppSignInService, AppSignInService>();
 builder.Services.AddScoped<IAuthService, SupabaseAuthService>();
+builder.Services.AddScoped<IPointOfSaleService, PointSaleDAO>();
+builder.Services.AddScoped<IKardexDataService, KardexDAO>();
 
 var app = builder.Build();
 

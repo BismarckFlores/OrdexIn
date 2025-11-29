@@ -1,10 +1,18 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using OrdexIn.Services.Intefaces;
 
 namespace OrdexIn.Controllers
 {
     public class KardexController : Controller
     {
+        private readonly IKardexDataService _kardexService;
+
+        public KardexController(IKardexDataService kardexService)
+        {
+            _kardexService = kardexService;
+        }
+        
         // GET: KardexController
         public ActionResult Index()
         {
