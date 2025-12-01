@@ -1,4 +1,5 @@
 using OrdexIn.Models;
+using OrdexIn.Models.DTO;
 
 namespace OrdexIn.Services.Intefaces;
 

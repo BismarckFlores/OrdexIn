@@ -1,5 +1,11 @@
 ﻿@{
-    ViewData["Title"] = "Dashboard Principal";
+    string title = "Dashboard Principal";
+    if (User.IsInRole("admin"))
+    {
+        title += " - Administrador";
+    }
+    
+    ViewData["Title"] = title;
 }
 
 <h1 class="mb-4" id="authTitle"><i class="fa fa-tablet-alt"></i> Dashboard del Sistema</h1>

@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace OrdexIn.Models;
+namespace OrdexIn.Models.DTO;
 
 public class ProductCreateDto
 {

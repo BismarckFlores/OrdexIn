@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using OrdexIn.Models;
+using OrdexIn.Models.DTO;
 using OrdexIn.Services.Intefaces;
 
 namespace OrdexIn.Controllers.Api;

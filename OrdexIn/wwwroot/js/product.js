@@ -1,9 +1,11 @@
 // file: `OrdexIn/wwwroot/js/product.js`
 (function () {
+    // Important constants
     const DEFAULT_PAGE_SIZE = 100;
     let page = 1;
     let lastTotalPages = 1;
 
+    // DOM elements
     const tableContainer = document.getElementById('productsTable');
     const searchInput = document.getElementById('searchInput');
     const searchBtn = document.getElementById('searchBtn');
@@ -15,7 +17,12 @@
     const nextBtns = Array.from(document.querySelectorAll('.pager-next'));
     const pageInfos = Array.from(document.querySelectorAll('.pager-info'));
 
+    // Additional elements
     const productsMeta = document.getElementById('productsMeta');
+    const productsTable = document.getElementById('productsTable');
+    
+    // Admin check
+    const isAdmin = productsTable ? productsTable.dataset.isAdmin === '1' : false;
 
     if (!tableContainer) {
         console.error('product.js: missing #productsTable element.');
@@ -122,20 +129,24 @@
         } else {
             let rows = '';
             for (const p of items) {
-                rows += `<tr data-id="${p.id}">
-                    <td>${p.id}</td>
-                    <td>${escapeHtml(p.name)}</td>
-                    <td>${formatCurrency(p.price)}</td>
-                    <td>${p.stock ?? 0}</td>
-                    <td>${p.minStock ?? (p.minStock === 0 ? 0 : '')}</td>
-                    <td class="actions">
-                      <a class="action-btn icon detailsBtn" href="${base}/Product/Details/${p.id}" role="button" aria-label="View details" title="Details"><i class="fas fa-info-circle" aria-hidden="true"></i></a>
-                      <button type="button" class="action-btn icon entryBtn" title="Entrada de lote" aria-label="Add batch"><i class="fas fa-box-open" aria-hidden="true"></i></button>
-                      <button type="button" class="action-btn icon saleBtn" title="Salida por venta" aria-label="Sell"><i class="fas fa-shopping-cart" aria-hidden="true"></i></button>
+                const adminActions = isAdmin ? `
                       <button type="button" class="action-btn icon editBtn" title="Edit" aria-label="Edit"><i class="fas fa-edit" aria-hidden="true"></i></button>
                       <button type="button" class="action-btn icon deleteBtn" title="Delete" aria-label="Delete"><i class="fas fa-trash-alt" aria-hidden="true"></i></button>
-                    </td>
-                  </tr>`;
+                  ` : '';
+                  
+                  rows += `<tr data-id="${p.id}">
+                      <td>${p.id}</td>
+                      <td>${escapeHtml(p.name)}</td>
+                      <td>${formatCurrency(p.price)}</td>
+                      <td>${p.stock ?? 0}</td>
+                      <td>${p.minStock ?? (p.minStock === 0 ? 0 : '')}</td>
+                      <td class="actions">
+                        <a class="action-btn icon detailsBtn" href="${base}/Product/Details/${p.id}" role="button" aria-label="View details" title="Details"><i class="fas fa-info-circle" aria-hidden="true"></i></a>
+                        <button type="button" class="action-btn icon entryBtn" title="Entrada de lote" aria-label="Add batch"><i class="fas fa-box-open" aria-hidden="true"></i></button>
+                        <button type="button" class="action-btn icon saleBtn" title="Salida por venta" aria-label="Sell"><i class="fas fa-shopping-cart" aria-hidden="true"></i></button>
+                        ${adminActions}
+                      </td>
+                    </tr>`;
             }
             tbody.innerHTML = rows;
         }

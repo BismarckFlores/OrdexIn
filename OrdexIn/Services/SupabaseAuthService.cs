@@ -6,16 +6,18 @@ namespace OrdexIn.Services
 {
     public class SupabaseAuthService : IAuthService
     {
+        private readonly ILogger<SupabaseAuthService> _logger;
         private readonly Client _supabaseClient;
         private readonly IConfiguration _configuration;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         public SupabaseAuthService(Client supabaseClient, IConfiguration configuration,
-            IHttpContextAccessor httpContextAccessor)
+            IHttpContextAccessor httpContextAccessor, ILogger<SupabaseAuthService> logger)
         {
             _supabaseClient = supabaseClient;
             _configuration = configuration;
             _httpContextAccessor = httpContextAccessor;
+            _logger = logger;
         }
 
         public async Task<Session?> LoginUserAsync(UserModel user)
@@ -31,7 +33,7 @@ namespace OrdexIn.Services
             }
             catch (Exception ex)
             {
-                throw new Exception("Error logging in user", ex);
+                throw new Exception("Error logging in user " + ex);
             }
 
             return null;
@@ -39,26 +41,31 @@ namespace OrdexIn.Services
 
         public async Task<Session?> RegisterUserAsync(UserModel user, bool isAdmin = false)
         {
-            var options = new SignUpOptions();
-            if (isAdmin)
-            {
-                options.Data = new Dictionary<string, object>
-                {
-                    { "is_admin", isAdmin }
-                };
-            }
-
             try
             {
-                var session = await _supabaseClient.Auth.SignUp(user.Email, user.Password, options);
-                if (session?.User != null)
+                var session = await _supabaseClient.Auth.SignUp(user.Email, user.Password);
+                if (session is {User.Id: not null})
                 {
+                    if (!isAdmin) return session;
+
+                    Guid.TryParse(session.User.Id, out Guid guid);
+
+                    var roleUpdate = await _supabaseClient
+                        .From<ProfileModel>()
+                        .Where(u => u.UserId == guid)
+                        .Single();
+
+                    if (roleUpdate == null) throw new Exception("Failed to assign admin role to the user.");
+                    
+                    roleUpdate.IsAdmin = isAdmin;
+                    await roleUpdate.Update<ProfileModel>();
+                    
                     return session;
                 }
             }
             catch (Exception ex)
             {
-                throw new Exception("Error registering user", ex);
+                throw new Exception("Error registering user " + ex);
             }
 
             return null;
@@ -68,24 +75,35 @@ namespace OrdexIn.Services
         {
             try
             {
-                await _supabaseClient.Auth.SignOut();
+                await _supabaseClient.Auth.SignOut(Constants.SignOutScope.Local);
             }
             catch (Exception ex)
             {
-                throw new Exception("Error logging out user", ex);
+                throw new Exception("Error logging out user " + ex);
             }
         }
 
         public async Task<bool> IsUserAdminAsync(Guid userId)
         {
-            var response = await _supabaseClient
-                .From<UserRoleModel>()
-                .Where(x => x.UserId == userId)
-                .Limit(1)
-                .Get();
+            try
+            { 
+                var response = await _supabaseClient
+                    .From<ProfileModel>()
+                    .Select("*")
+                    .Where(x => x.UserId == userId)
+                    .Get()
+                    .ContinueWith(t => t.Result.Models.FirstOrDefault());
+            
+                if (response == null)
+                    _logger.LogWarning("User profile not found for userId: {userId}", userId);
 
-            var userRole = response.Models.FirstOrDefault();
-            return userRole != null && userRole.IsAdmin;
+                return response.IsAdmin;
+            }
+            catch (Exception e)
+            {
+                _logger.LogWarning("Error issuing user profile for userId {userid}", userId);
+            }
+            return false;
         }
 
 
@@ -136,7 +154,7 @@ namespace OrdexIn.Services
             }
             catch (Exception ex)
             {
-                throw new Exception("Error sending password recovery email", ex);
+                throw new Exception("Error sending password recovery email " + ex);
             }
         }
 
@@ -170,9 +188,13 @@ namespace OrdexIn.Services
             }
             catch (Exception ex)
             {
-                // Console.WriteLine($"[SupabaseAuthService] ResetPasswordAsync exception: {ex}");
-                return false;
+                throw new Exception("Error resetting password " + ex);
             }
+        }
+
+        public async Task<List<UserModel>> GetAllUsersAsync()
+        {
+            throw  new NotImplementedException();
         }
     }
 }

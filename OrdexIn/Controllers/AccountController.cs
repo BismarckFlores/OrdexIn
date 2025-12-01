@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using OrdexIn.Models;
 using OrdexIn.Services;
@@ -8,12 +9,15 @@ namespace OrdexIn.Controllers
     [AllowAnonymous]
     public class AccountController : Controller
     {
+        private readonly ILogger<AccountController> _logger;
         private readonly IAuthService _supabaseAuthService;
         private readonly IAppSignInService _appSignInService;
-        public AccountController(IAuthService supabaseAuthService, IAppSignInService appSignInService)
+        public AccountController(IAuthService supabaseAuthService, IAppSignInService appSignInService,
+            ILogger<AccountController> logger)
         {
             _supabaseAuthService = supabaseAuthService;
             _appSignInService = appSignInService;
+            _logger = logger;
         }
         
         public IActionResult Index()
@@ -45,16 +49,27 @@ namespace OrdexIn.Controllers
             try
             {
                 var session = await _supabaseAuthService.LoginUserAsync(user);
+                
+                if (session == null) _logger.LogCritical("[ProcessLogin] SupabaseAuthService.LoginUserAsync returned null session.");
 
                 if (session?.User != null && !string.IsNullOrEmpty(session.AccessToken))
                 {
-                    await _appSignInService.SignInAsync(session);
-                    return RedirectToAction("Index", "Home");
+                    try
+                    {
+                        await _appSignInService.SignInAsync(session);
+                        return RedirectToAction("Index", "Home");
+                    }
+                    catch (Exception e)
+                    {
+                        ModelState.AddModelError(string.Empty, "Error al inciar session en la aplicación. " + e.Message);
+                        throw;
+                    }
+                    
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                ModelState.AddModelError(string.Empty, "Credenciales inválidas. Por favor, inténtelo de nuevo.");
+                ModelState.AddModelError(string.Empty, $"Hay Credenciales inválidas. Por favor, inténtelo de nuevo. {ex}");
             }
             return View("Login", user);
         }
@@ -82,7 +97,7 @@ namespace OrdexIn.Controllers
                 return View("Register", user);
             }
         
-            var session = await _supabaseAuthService.RegisterUserAsync(user);
+            var session = await _supabaseAuthService.RegisterUserAsync(user, true);
         
             if (session?.User != null && !string.IsNullOrEmpty(session.AccessToken))
             {
@@ -113,9 +128,16 @@ namespace OrdexIn.Controllers
                 ModelState.AddModelError(string.Empty, "El correo es requerido.");
                 return View("ForgotPassword");
             }
+            try
+            {
+                await _supabaseAuthService.SendPasswordResetEmailAsync(new UserModel { Email = email });
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, "Error sending password reset email, try again in 10 seconds." + ex);
+                return View("ForgotPassword", new UserModel { Email = email });
+            }
             
-            TempData["InfoMessage"] = "Si el correo existe, recibirás instrucciones para restablecer la contraseña.";
-            await _supabaseAuthService.SendPasswordResetEmailAsync(new UserModel { Email = email });
             return RedirectToAction("Login");
         }
 
@@ -165,7 +187,7 @@ namespace OrdexIn.Controllers
                 if (success)
                 {
                     TempData["InfoMessage"] = "Contraseña actualizada correctamente. Por favor, inicie sesión.";
-                    return RedirectToAction("Login");
+                    return RedirectToAction("ResetPassword");
                 }
 
                 // Console.WriteLine("[ResetPassword] ResetPasswordAsync returned false - password not updated.");

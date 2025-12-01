@@ -1,4 +1,4 @@
-namespace OrdexIn.Models;
+namespace OrdexIn.Models.DTO;
 
 public class LotDto
 {
