@@ -1,0 +1,86 @@
+@* file: `Views/Product/Details.cshtml` *@
+@model OrdexIn.Models.ProductDetailsViewModel
+
+<div class="app-card" style="padding:18px; margin-bottom:18px;">
+    <h1 class="page-title"><i class = "fa fa-box-open"></i> Detalles — @Model.ProductModel.Name</h1>
+
+    <!-- Single-product shown as the same card-like table used in Index -->
+    <div class="table-responsive app-table-container app-card" style="padding:12px; margin-bottom:12px;">
+        <table class="products-table" role="table" aria-label="Product summary">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Precio</th>
+                <th>Stock</th>
+                <th>Stock Minimo</th>  <th>Acciones</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>@Model.ProductModel.Id</td>
+                <td>@Model.ProductModel.Name</td>
+                <td>@Model.ProductModel.Price</td>
+                <td style="text-align:center;">@Model.ProductModel.Stock</td>
+                <td style="text-align:center;">@Model.ProductModel.StockMin</td> <td style="display:flex;gap:8px;justify-content:flex-end;">
+                    <a class="detailsBtn btn" href="@Url.Action("Index", "Product")" role="button" aria-label="Back to products">Back</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2 style="margin-top:6px;"><i class = "fa fa-clipboard-list"></i> Lotes</h2>
+    <div id="lotsContainer" aria-live="polite">Loading lots...</div>
+
+    <p style="margin-top:12px;"><a href="@Url.Action("Index", "Product")">Back to products</a></p>
+</div>
+
+@section Scripts {
+<script>
+    (function () {
+        const productId = @Model.ProductModel.Id;
+        const container = document.getElementById('lotsContainer');
+
+        function escapeHtml(s){ return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+        async function loadLots() {
+            try {
+                container.innerText = 'Loading lots...';
+                const url = `/api/PointOfSale/inventory/${productId}`;
+                const res = await fetch(url);
+
+                if (!res.ok) {
+                    const txt = await res.text().catch(() => res.statusText);
+                    container.innerText = `Failed to load lots: ${res.status} ${txt}`;
+                    return;
+                }
+
+                const lots = await res.json();
+
+                if (!Array.isArray(lots) || lots.length === 0) {
+                    container.innerHTML = `<div>No lots found (returned ${Array.isArray(lots) ? lots.length : 'non-array'})</div><pre>${escapeHtml(JSON.stringify(lots, null, 2))}</pre>`;
+                    return;
+                }
+
+                // Build a products-table for lots so header aligns with card rows
+                let html = '<table class="products-table" role="table" aria-label="Lots"><thead><tr><th>Id</th><th>Cantidad</th><th>Expiración</th></tr></thead><tbody>';
+                for (const l of lots) {
+                    const exp = l.expirationDate ? new Date(l.expirationDate).toLocaleDateString('es-ES') : '';
+                    html += `<tr>
+            <td style="flex:0 0 60px;">${escapeHtml(l.id)}</td>
+            <td>${escapeHtml(l.quantity)}</td>
+            <td>${escapeHtml(exp)}</td>
+          </tr>`;
+                }
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            } catch (e) {
+                container.innerText = 'Error loading lots: ' + (e && e.message ? e.message : e);
+            }
+        }
+
+        loadLots();
+    })();
+</script>
+}

@@ -1,10 +1,27 @@
-﻿<!DOCTYPE html>
+﻿@functions {
+    private string NavActive(string controller, string action = null)
+    {
+        var routeController = ViewContext.RouteData.Values["controller"]?.ToString();
+        var routeAction = ViewContext.RouteData.Values["action"]?.ToString();
+
+        if (!string.IsNullOrEmpty(action))
+        {
+            return string.Equals(routeController, controller, StringComparison.OrdinalIgnoreCase)
+                   && string.Equals(routeAction, action, StringComparison.OrdinalIgnoreCase)
+                ? "active"
+                : "";
+        }
+
+        return string.Equals(routeController, controller, StringComparison.OrdinalIgnoreCase) ? "active" : "";
+    }
+}
+
+<!DOCTYPE html>
 <html lang = "es">
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>@ViewData["Title"]</title>
-    
     <link rel="stylesheet" href="~/css/account.css"/>
     <link rel="stylesheet" href="~/css/site.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -27,21 +44,21 @@
 
             <div class="nav-menu-top">
                 <nav class="nav flex-column mt-4">
-                    <div class="nav-item">
-                        <a class="nav-link active" asp-area="" asp-controller="Home" asp-action="Index">
+                    <li class="nav-item">
+                        <a class='nav-link @(NavActive("Home","Index"))' asp-area="" asp-controller="Home" asp-action="Index">
                             <i class="fas fa-home"></i> <span>Dashboard</span>
                         </a>
-                    </div>
-                    <div class="nav-item">
-                        <a class="nav-link" asp-area="" asp-controller="Inventory" asp-action="Index">
+                    </li>
+                    <li class="nav-item">
+                        <a class='nav-link @(NavActive("Product","Index"))' asp-area="" asp-controller="Product" asp-action="Index">
                             <i class="fas fa-boxes"></i> <span>Inventario</span>
                         </a>
-                    </div>
-                    <div class="nav-item">
-                        <a class="nav-link" asp-area="" asp-controller="Management" asp-action="Index">
+                    </li>
+                    <li class="nav-item">
+                        <a class='nav-link @(NavActive("Management","Index"))' asp-area="" asp-controller="Management" asp-action="Index">
                             <i class="fas fa-cogs"></i> <span>Managment</span>
                         </a>
-                    </div>
+                    </li>
                 </nav>
             </div>
                 

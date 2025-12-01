@@ -8,6 +8,10 @@ using OrdexIn.Services.Intefaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
@@ -57,7 +61,7 @@ builder.Services.AddTransient<Client>(serviceProvider =>
 // Custom services DI registration
 builder.Services.AddScoped<IAppSignInService, AppSignInService>();
 builder.Services.AddScoped<IAuthService, SupabaseAuthService>();
-builder.Services.AddScoped<IProductService, ProductDao>();
+builder.Services.AddScoped<IProductService, ProductDAO>();
 builder.Services.AddScoped<IPointOfSaleService, PointSaleDAO>();
 builder.Services.AddScoped<IKardexDataService, KardexDAO>();
 

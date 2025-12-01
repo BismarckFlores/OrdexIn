@@ -5,7 +5,7 @@ using System;
 namespace OrdexIn.Models
 {
     [Table("inventory_test")]
-    public class Product : BaseModel
+    public class ProductModel : BaseModel
     {
         [PrimaryKey("id", false)]
         public int Id { get; set; }

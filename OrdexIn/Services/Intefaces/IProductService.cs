@@ -5,19 +5,19 @@ namespace OrdexIn.Services.Intefaces;
 public interface IProductService
 {
     // Obtener todos los productos
-    Task<List<Product>> GetAllProductsAsync();
+    Task<List<ProductModel>> GetAllProductsAsync();
     
     // Obtener un producto por ID
-    Task<Product?> GetByIdAsync(int id);
+    Task<ProductModel?> GetByIdAsync(int id);
     
     // Crear un nuevo producto
-    Task<bool> CreateAsync(Product item);
+    Task<ProductModel?> CreateAsync(ProductModel item, Guid userId);
     
     // Actualizar un producto existente
-    Task<bool> UpdateAsync(Product item);
+    Task<bool> UpdateAsync(ProductDto item, Guid userId);
     
     // Eliminar un producto por ID
-    Task<bool> RemoveAsync(int id);
+    Task<bool> RemoveAsync(int id, Guid userId, bool isRollback = false);
     
     // Verificar si un producto existe por ID
     Task<bool> ExistsAsync(int id);

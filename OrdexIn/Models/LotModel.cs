@@ -17,4 +17,7 @@ public class LotModel : BaseModel
     
     [Column("expires_at")]
     public DateTime ExpirationDate { get; set; }
+    
+    [Column("created_at")]
+    public DateTime CreatedAt { get; set; }
 }

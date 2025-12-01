@@ -9,10 +9,12 @@ namespace OrdexIn.Controllers.Api;
 public class InventoryController : ControllerBase
 {
    private readonly IProductService _productService;
+   private readonly IKardexDataService _kardexService;
    
-   public InventoryController(IProductService productService)
+   public InventoryController(IProductService productService, IKardexDataService kardexService)
    {
        _productService = productService;
+         _kardexService = kardexService;
    }
    
    [HttpGet("stats")]
@@ -29,5 +31,25 @@ public class InventoryController : ControllerBase
            LastUpdatedUtc = DateTime.UtcNow
        };
        return Ok(stats);
+   }
+
+   [HttpGet("recent")]
+   public async Task<IActionResult> GetRecentMovemnts()
+   {
+       var all = await _kardexService.GetAllKardexEntriesAsync();
+       var recent = all
+           .OrderByDescending(k => k.CreatedAt)
+           .Take(10)
+           .Select(k => new RecentMovements
+           {
+               TransactionType = k.TransactionType,
+               Quantity = k.Quantity,
+               Price = k.UnitCost,
+               Total = k.TotalCost,
+               Reason = k.Reason,
+               CreatedAt = k.CreatedAt
+           });
+       
+         return Ok(recent);
    }
 }
