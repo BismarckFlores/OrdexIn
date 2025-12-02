@@ -58,7 +58,7 @@
                     {
                         <li class="nav-item">
                             <a class='nav-link @(NavActive("Management", "Index"))' asp-area="" asp-controller="Management" asp-action="Index">
-                                <i class="fas fa-cogs"></i> <span>Managment</span>
+                                <i class="fas fa-clipboard-list"></i> <span>Historial</span>
                             </a>
                         </li>
                     }
@@ -66,9 +66,12 @@
             </div>
                 
             <div class="sidebar-footer">
-                <button class="btn-logout" id="logoutButton" type="button" asp-action="Logout" asp-controller="Account">
-                    <i class="fas fa-sign-out-alt"></i> <span>Cerrar Sesión</span>
-                </button>
+                <form id="logoutTokenForm" asp-controller="Auth" asp-action="Logout" method="post" style="display:inline">
+                    @Html.AntiForgeryToken()
+                    <button id="logoutBtn" class="btn-logout" type="button">
+                        <i class="fas fa-sign-out-alt"></i> <span>Cerrar Sesión</span>
+                    </button>
+                </form>
             </div>
 
         </aside>
@@ -82,7 +85,11 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js"></script>
+
     <script src="~/js/site.js"></script> 
+
+    <script src = "~/js/auth.js"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

@@ -7,6 +7,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using OrdexIn.Hubs;
 using Supabase;
 using OrdexIn.Models;
+using OrdexIn.Models.DTO;
 using OrdexIn.Services.Intefaces;
 
 namespace OrdexIn.Services
@@ -238,7 +239,7 @@ namespace OrdexIn.Services
         private async Task BroadcastStatsUpdateAsync()
         {
             var products = await GetAllProductsAsync();
-            var stats = new InventoryStats
+            var stats = new InventoryStatsDto
             {
                 TotalProducts = products.Count,
                 TotalStock = products.Sum(p => p.Stock),

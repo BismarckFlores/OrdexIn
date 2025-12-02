@@ -192,6 +192,24 @@ namespace OrdexIn.Services
             }
         }
 
+        public async Task<string> GetUserEmailAsync(Guid userId)
+        {
+            try
+            {
+                var user = await _supabaseClient
+                    .From<ProfileModel>()
+                    .Select("*")
+                    .Where(x => x.UserId == userId)
+                    .Single();
+                
+                return user?.Email ?? "Accion sin usuario";
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error retrieving user email " + ex);
+            }
+        }
+        
         public async Task<List<UserModel>> GetAllUsersAsync()
         {
             throw  new NotImplementedException();

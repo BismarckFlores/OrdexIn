@@ -15,6 +15,22 @@
 
   <ItemGroup>
     <_ContentIncludedByDefault Remove="Pages\Reportes\kardex.cshtml" />
+    <_ContentIncludedByDefault Remove="Views\Account\Expired.cshtml" />
+    <_ContentIncludedByDefault Remove="Views\Account\ForgotPassword.cshtml" />
+    <_ContentIncludedByDefault Remove="Views\Account\Login.cshtml" />
+    <_ContentIncludedByDefault Remove="Views\Account\Register.cshtml" />
+    <_ContentIncludedByDefault Remove="Views\Account\ResetPassword.cshtml" />
+    <_ContentIncludedByDefault Remove="Views\Account\_ViewStart.cshtml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="Views\Auth\Login.cshtml" />
+    <Content Remove="Views\Auth\ForgotPassword.cshtml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Controllers\AuthController.cs" />
+    <Compile Remove="Controllers\Api\AuthController.cs" />
   </ItemGroup>
 
 </Project>

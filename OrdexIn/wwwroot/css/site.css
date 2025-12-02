@@ -867,3 +867,193 @@ body.sidebar-closed .main-content {
   padding: 6px 8px;
   font-size: 0.9rem;
 }
+
+/* Keep table inside viewport */
+.app-table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.kardex-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 12px;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* Header card */
+.kardex-table thead {
+  display: block;
+  margin: 0 6px 12px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(2,6,23,0.12);
+}
+.kardex-table thead tr {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 0;
+  flex-wrap: nowrap;
+}
+.kardex-table thead th {
+  padding: 10px 12px;
+  color: var(--muted);
+  font-weight: 700;
+  text-align: left;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  box-sizing: border-box;
+  white-space: nowrap;        /* default: prevent header wrapping */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Body rows as cards */
+.kardex-table tbody { display: block; }
+.kardex-table tbody tr {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.02));
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: 0 8px 24px rgba(2,6,23,0.35);
+  margin: 0 6px;
+  flex-wrap: nowrap; /* keep the whole row on one line */
+  margin-inline: 0;
+  padding-inline: 12px;
+}
+.kardex-table tbody tr td {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  padding: 6px 8px;
+  border: none;
+  color: var(--text);
+  min-width: 0; /* allow flex items to shrink */
+  box-sizing: border-box;
+  white-space: nowrap; /* default: no wrap for cells */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* MATCHING COLUMN SIZES: header and body share the same flex/width so they align */
+
+/* 1: Type */
+.kardex-table thead th:nth-child(1),
+.kardex-table tbody tr td:nth-child(1) {
+  flex: 0 0 155px;
+  width: 155px;
+  text-align: center;
+  font-weight: 700;
+  white-space: wrap;
+}
+
+/* 2: Description (flexible) - allow wrapper in both header and body */
+.kardex-table thead th:nth-child(2),
+.kardex-table tbody tr td:nth-child(2) {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.kardex-table thead th:nth-child(2) { white-space: normal; } /* header label can break if needed */
+.kardex-table tbody tr td:nth-child(2) {
+  white-space: normal;     /* allow multiline text inside description */
+  overflow: visible;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  text-overflow: clip;
+}
+
+/* 3: Quantity */
+.kardex-table thead th:nth-child(3),
+.kardex-table tbody tr td:nth-child(3) {
+  flex: 0 0 100px;
+  width: 100px;
+  text-align: center;
+}
+
+/* 4: Unit cost */
+.kardex-table thead th:nth-child(4),
+.kardex-table tbody tr td:nth-child(4) {
+  flex: 0 0 140px;
+  width: 140px;
+  text-align: center;
+}
+
+/* 5: Total */
+.kardex-table thead th:nth-child(5),
+.kardex-table tbody tr td:nth-child(5) {
+  flex: 0 0 140px;
+  width: 140px;
+  text-align: center;
+}
+
+/* 6: Date & Time */
+.kardex-table thead th:nth-child(6),
+.kardex-table tbody tr td:nth-child(6) {
+  flex: 0 0 180px;
+  width: 180px;
+  text-align: center;
+}
+
+/* 7: Email - allow wrapping only for this column's content */
+.kardex-table thead th:nth-child(7),
+.kardex-table tbody tr td:nth-child(7) {
+  flex: 0 0 200px;
+  width: 200px;
+  text-align: left;
+  min-width: 0;
+}
+.kardex-table thead th:nth-child(7) { white-space: nowrap; } /* keep header text on one line if possible */
+.kardex-table tbody tr td:nth-child(7) {
+  white-space: normal;        /* allow email to wrap */
+  overflow: visible;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  text-overflow: clip;
+  align-items: flex-start;    /* let multi-line email align top */
+}
+
+/* Prevent any cell from forcing minimum width */
+.kardex-table thead th,
+.kardex-table tbody td {
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* Small-screen stacked layout remains intact */
+@media (max-width: 760px) {
+  .kardex-table thead { display: none; }
+  .kardex-table tbody tr {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    margin: 0 6px 12px;
+    padding-inline: 10px;
+  }
+  .kardex-table tbody tr td {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 10px;
+    white-space: normal;
+    overflow: visible;
+  }
+  .kardex-table tbody tr td:nth-child(6),
+  .kardex-table tbody tr td:nth-child(7) {
+    justify-content: flex-start;
+    gap: 8px;
+  }
+}

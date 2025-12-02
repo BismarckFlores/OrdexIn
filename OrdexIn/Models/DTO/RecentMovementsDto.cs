@@ -1,6 +1,6 @@
-namespace OrdexIn.Models;
+namespace OrdexIn.Models.DTO;
 
-public class RecentMovements
+public class RecentMovementsDto
 {
     public string TransactionType { get; set; } = string.Empty;
     public int? Quantity { get; set; }

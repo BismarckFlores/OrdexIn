@@ -4,7 +4,7 @@ using OrdexIn.Services.Intefaces;
 
 namespace OrdexIn.Controllers
 {
-    [Authorize(Roles =  "Admin")]
+    [Authorize(Roles = "admin")]
     public class ManagementController : Controller
     {
         private readonly IKardexDataService _kardexService;

@@ -65,7 +65,7 @@ public class ProductController : ControllerBase
         var all = await _productService.GetAllProductsAsync();
 
         var filtered = all
-            .Where(p => !string.IsNullOrEmpty(p.Name) && p.Name.Contains(q ?? string.Empty, StringComparison.OrdinalIgnoreCase))
+            .Where(p => !string.IsNullOrEmpty(p.Name) && p.Name.Contains(q, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         if (lowStock)

@@ -1,6 +1,6 @@
-namespace OrdexIn.Models;
+namespace OrdexIn.Models.DTO;
 
-public class InventoryStats
+public class InventoryStatsDto
 {
     public int TotalProducts { get; set; }
     public int TotalStock { get; set; }

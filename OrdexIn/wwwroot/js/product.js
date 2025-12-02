@@ -16,13 +16,10 @@
     const prevBtns = Array.from(document.querySelectorAll('.pager-prev'));
     const nextBtns = Array.from(document.querySelectorAll('.pager-next'));
     const pageInfos = Array.from(document.querySelectorAll('.pager-info'));
-
-    // Additional elements
     const productsMeta = document.getElementById('productsMeta');
-    const productsTable = document.getElementById('productsTable');
     
     // Admin check
-    const isAdmin = productsTable ? productsTable.dataset.isAdmin === '1' : false;
+    const isAdmin = tableContainer ? tableContainer.dataset.isAdmin === '1' : false;
 
     if (!tableContainer) {
         console.error('product.js: missing #productsTable element.');

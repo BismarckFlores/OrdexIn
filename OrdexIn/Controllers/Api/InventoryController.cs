@@ -19,11 +19,11 @@ public class InventoryController : ControllerBase
    }
    
    [HttpGet("stats")]
-   public async Task<ActionResult<InventoryStats>> GetStats()
+   public async Task<ActionResult<InventoryStatsDto>> GetStats()
    {
        // compute minimal stats quickly (use service methods you already have)
        var allProducts = await _productService.GetAllProductsAsync();
-       var stats = new InventoryStats
+       var stats = new InventoryStatsDto
        {
            TotalProducts = allProducts.Count,
            TotalStock = allProducts.Sum(p => p.Stock),
@@ -41,7 +41,7 @@ public class InventoryController : ControllerBase
        var recent = all
            .OrderByDescending(k => k.CreatedAt)
            .Take(10)
-           .Select(k => new RecentMovements
+           .Select(k => new RecentMovementsDto
            {
                TransactionType = k.TransactionType,
                Quantity = k.Quantity,

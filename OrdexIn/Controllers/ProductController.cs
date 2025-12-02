@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using OrdexIn.Models;
+using OrdexIn.Models.DTO;
 using OrdexIn.Services.Intefaces;
 
 namespace OrdexIn.Controllers
@@ -28,7 +27,7 @@ namespace OrdexIn.Controllers
             var product = _productService.GetByIdAsync(id).Result;
             if (product == null) return NotFound("Product not found");
             
-            var vm = new ProductDetailsViewModel
+            var vm = new ProductDetailsDto()
             {
                 ProductModel = product
             };

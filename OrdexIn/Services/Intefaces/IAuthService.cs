@@ -11,7 +11,8 @@ namespace OrdexIn.Services
         Task<bool> ResetPasswordAsync(string newPassword, string? accessToken = null);
         Task<bool> IsUserAdminAsync(Guid userId);
         Task LogoutAsync();
-        
+
+        Task<string> GetUserEmailAsync(Guid userId);
         Task<List<UserModel>> GetAllUsersAsync();
     }
 }
