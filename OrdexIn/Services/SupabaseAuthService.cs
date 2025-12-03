@@ -1,4 +1,5 @@
 ﻿using OrdexIn.Models;
+using OrdexIn.Services.Intefaces;
 using Supabase.Gotrue;
 using Client = Supabase.Client;
 
@@ -6,16 +7,23 @@ namespace OrdexIn.Services
 {
     public class SupabaseAuthService : IAuthService
     {
-        private readonly Client _supabaseClient;
-        private readonly IConfiguration _configuration;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ILogger<SupabaseAuthService> _logger;
+        private readonly IKardexDataService _kardexService;
+        private readonly IConfiguration _configuration;
+        private readonly Client _supabaseClient;
+        
+        private const int MaxRetry = 5;
 
         public SupabaseAuthService(Client supabaseClient, IConfiguration configuration,
-            IHttpContextAccessor httpContextAccessor)
+            IHttpContextAccessor httpContextAccessor, IKardexDataService kardexService,
+            ILogger<SupabaseAuthService> logger)
         {
             _supabaseClient = supabaseClient;
             _configuration = configuration;
             _httpContextAccessor = httpContextAccessor;
+            _kardexService = kardexService;
+            _logger = logger;
         }
 
         public async Task<Session?> LoginUserAsync(UserModel user)
@@ -31,7 +39,7 @@ namespace OrdexIn.Services
             }
             catch (Exception ex)
             {
-                throw new Exception("Error logging in user", ex);
+                throw new Exception("Error logging in user " + ex);
             }
 
             return null;
@@ -39,53 +47,121 @@ namespace OrdexIn.Services
 
         public async Task<Session?> RegisterUserAsync(UserModel user, bool isAdmin = false)
         {
-            var options = new SignUpOptions();
-            if (isAdmin)
-            {
-                options.Data = new Dictionary<string, object>
-                {
-                    { "is_admin", isAdmin }
-                };
-            }
-
+            if (string.IsNullOrEmpty(user.Email) || string.IsNullOrEmpty(user.Password))
+                throw new ArgumentException("Email and password are required", nameof(user));
+            
+            var currentAccess = _supabaseClient.Auth.CurrentSession?.AccessToken;
+            var currentRefresh = _supabaseClient.Auth.CurrentSession?.RefreshToken;
+            
             try
             {
-                var session = await _supabaseClient.Auth.SignUp(user.Email, user.Password, options);
-                if (session?.User != null)
+                var session = await _supabaseClient.Auth.SignUp(user.Email, user.Password);
+                
+                if (session is {User.Id: not null})
                 {
+                    if (isAdmin)
+                    {
+                        if (Guid.TryParse(session.User.Id, out var guid))
+                        {
+                            try
+                            {
+                                var roleProfile = await _supabaseClient
+                                    .From<ProfileModel>()
+                                    .Where(u => u.UserId == guid)
+                                    .Single();
+                            
+                                if (roleProfile == null)
+                                {
+                                    // Create profile if none exists
+                                    var profileToInsert = new ProfileModel
+                                    {
+                                        UserId = guid,
+                                        Email = user.Email,
+                                        IsAdmin = true
+                                    };
+                                    await _supabaseClient
+                                        .From<ProfileModel>()
+                                        .Insert(profileToInsert);
+                                }
+                                else
+                                {
+                                    // Update existing profile to set admin
+                                    roleProfile.IsAdmin = true;
+                                    await roleProfile.Update<ProfileModel>();
+                                }
+                                
+                                // await _kardexService.RegisterKardexEntry()
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogWarning(ex, "Failed to create/update profile for new user {UserId}", guid);
+                            }
+                            
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Could not parse new user's id '{Id}' as GUID", session.User.Id);
+                        }
+                    }
                     return session;
                 }
+                return null;
             }
             catch (Exception ex)
             {
-                throw new Exception("Error registering user", ex);
+                throw new Exception("Error registering user " + ex);
             }
-
-            return null;
+            finally
+            {
+                try
+                {
+                    // Restore previous session if any
+                    if (!string.IsNullOrEmpty(currentAccess) && !string.IsNullOrEmpty(currentRefresh))
+                    {
+                        await _supabaseClient.Auth.SetSession(currentAccess, currentRefresh);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to restore Supabase session after creating user");
+                }
+                
+            }
         }
 
         public async Task LogoutAsync()
         {
             try
             {
-                await _supabaseClient.Auth.SignOut();
+                await _supabaseClient.Auth.SignOut(Constants.SignOutScope.Local);
             }
             catch (Exception ex)
             {
-                throw new Exception("Error logging out user", ex);
+                throw new Exception("Error logging out user " + ex);
             }
         }
 
         public async Task<bool> IsUserAdminAsync(Guid userId)
         {
-            var response = await _supabaseClient
-                .From<UserRoleModel>()
-                .Where(x => x.UserId == userId)
-                .Limit(1)
-                .Get();
+            try
+            { 
+                var response = await _supabaseClient
+                    .From<ProfileModel>()
+                    .Select("*")
+                    .Where(x => x.UserId == userId)
+                    .Get()
+                    .ContinueWith(t => t.Result.Models.FirstOrDefault());
+            
+                if (response == null)
+                    _logger.LogWarning("User profile not found for userId: {userId}", userId);
 
-            var userRole = response.Models.FirstOrDefault();
-            return userRole != null && userRole.IsAdmin;
+                return response.IsAdmin;
+            }
+            catch (Exception e)
+            {
+                _logger.LogWarning("Error issuing user profile for userId {userid}", userId);
+            }
+            return false;
         }
 
 
@@ -136,7 +212,7 @@ namespace OrdexIn.Services
             }
             catch (Exception ex)
             {
-                throw new Exception("Error sending password recovery email", ex);
+                throw new Exception("Error sending password recovery email " + ex);
             }
         }
 
@@ -170,8 +246,79 @@ namespace OrdexIn.Services
             }
             catch (Exception ex)
             {
-                // Console.WriteLine($"[SupabaseAuthService] ResetPasswordAsync exception: {ex}");
-                return false;
+                throw new Exception("Error resetting password " + ex);
+            }
+        }
+
+        public async Task<string> GetUserEmailAsync(Guid userId)
+        {
+            try
+            {
+                var user = await _supabaseClient
+                    .From<ProfileModel>()
+                    .Select("*")
+                    .Where(x => x.UserId == userId)
+                    .Single();
+                
+                return user?.Email ?? "Accion sin usuario";
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error retrieving user email " + ex);
+            }
+        }
+        
+        public async Task<List<ProfileModel>> GetAllUsersAsync()
+        {
+            var results = new List<ProfileModel>();
+            const int chunkSize = 1000;
+            var from = 0;
+
+            while (true)
+            {
+                var response = await ExecuteWithRetry(async () =>
+                    await _supabaseClient
+                        .From<ProfileModel>()
+                        .Select("*")
+                        .Range(from, from + chunkSize - 1)
+                        .Get()
+                );
+
+                var page = response?.Models;
+                if (page == null || page.Count == 0)
+                    break;
+
+                results.AddRange(page);
+
+                if (page.Count < chunkSize)
+                    break; // last page
+
+                from += chunkSize;
+            }
+
+            return results;
+        }
+        
+        private static async Task<T> ExecuteWithRetry<T>(Func<Task<T>> operation)
+        {
+            var attempts = 0;
+            var delayMs = 200;
+
+            while (true)
+            {
+                try
+                {
+                    return await operation();
+                }
+                catch (Exception ex)
+                {
+                    attempts++;
+                    if (attempts >= MaxRetry)
+                        throw new Exception($"[ERROR] Operation failed after {MaxRetry} attempts: {ex.Message}", ex);
+
+                    await Task.Delay(delayMs);
+                    delayMs = Math.Min(delayMs * 2, 2000);
+                }
             }
         }
     }

@@ -1,0 +1,50 @@
+@{
+    ViewData["Title"] = "Historial de Movimientos";
+}
+
+<div class="app-card" style="padding:18px; margin-bottom:18px;">
+    <h1 class="page-title"><i class="fa fa-history"></i> Historial de Movimientos</h1>
+
+    <div class="products-actions" role="region" aria-label="Product actions" style="margin-bottom:12px;">
+        <label>Desde:</label><input id="initialDateInput" placeholder="dd/mm/aa" aria-label="Initial date" type="date"/>
+        <label>Hasta:</label><input id="finalDateInput" placeholder="dd/mm/aa" aria-label="Final date" type="date"/>
+        <button id="searchBtn" class="btn btn-primary"><i class="fa fa-magnifying-glass"></i> Filtrar</button>
+
+        <div style="margin-left:auto;" id="kardexMeta" class="kardex-meta" aria-live="polite">Cargando...</div>
+    </div>
+    
+    <div class="table-responsive app-table-container app-card" style="padding:12px;">
+        <div class="products-pager mt-2" aria-label="Pagination" style="display:flex;align-items:center;gap:8px;margin-top:12px;">
+            <button class="pager-prev btn" aria-label="Previous page" disabled><i class="fas fa-arrow-left"></i></button>
+            <span class="pager-info">Pagina 1 / 1</span>
+            <button class="pager-next btn" aria-label="Next page" disabled><i class="fas fa-arrow-right"></i></button>
+        </div>
+        <div id="kardexTable" aria-live="polite">
+            <table class="kardex-table" role="table" aria-label="Movement History">
+                <thead>
+                <tr>
+                    <th>Tipo de Movimiento</th>
+                    <th>Descripción</th>
+                    <th>Cantidad</th>
+                    <th>Costo unitario</th>
+                    <th>Total</th>
+                    <th>Fecha y Hora</th>
+                    <th>Usuario</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr><td colspan="6"><i class="fa fa-clock-four"></i>Cargando historial...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="products-pager mt-2" aria-label="Pagination" style="display:flex;align-items:center;gap:8px;margin-top:12px;">
+            <button class="pager-prev btn" aria-label="Previous page" disabled><i class="fas fa-arrow-left"></i></button>
+            <span class="pager-info">Pagina 1 / 1</span>
+            <button class="pager-next btn" aria-label="Next page" disabled><i class="fas fa-arrow-right"></i></button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/kardex.js" asp-append-version="true"></script>
+}

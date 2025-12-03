@@ -1,40 +1,33 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OrdexIn.Models;
-using OrdexIn.Services;
+using OrdexIn.Services.Intefaces;
 
 namespace OrdexIn.Controllers
 {
     [AllowAnonymous]
     public class AccountController : Controller
     {
+        private readonly ILogger<AccountController> _logger;
         private readonly IAuthService _supabaseAuthService;
         private readonly IAppSignInService _appSignInService;
-        public AccountController(IAuthService supabaseAuthService, IAppSignInService appSignInService)
+        public AccountController(IAuthService supabaseAuthService, IAppSignInService appSignInService,
+            ILogger<AccountController> logger)
         {
             _supabaseAuthService = supabaseAuthService;
             _appSignInService = appSignInService;
+            _logger = logger;
         }
         
-        public IActionResult Index()
-        {
-            // Redirige directamente al path de login configurado en Cookie options
-            return Redirect("/login");
-        }
+        public IActionResult Index() => Redirect("/login");
 
         [Route("expired")]
-        public IActionResult Expired()
-        {
-            return View();
-        }
+        public IActionResult Expired() => View();
 
         // GET: /login - muestra la página de login (necesario para que la cookie middleware pueda redirigir con GET)
         [HttpGet]
         [Route("login")]
-        public IActionResult Login()
-        {
-            return View();
-        }
+        public IActionResult Login() => View();
 
         // POST: /login - procesa el envío del formulario de login
         [HttpPost]
@@ -45,62 +38,35 @@ namespace OrdexIn.Controllers
             try
             {
                 var session = await _supabaseAuthService.LoginUserAsync(user);
+                
+                if (session == null) _logger.LogCritical("[ProcessLogin] SupabaseAuthService.LoginUserAsync returned null session.");
 
                 if (session?.User != null && !string.IsNullOrEmpty(session.AccessToken))
                 {
-                    await _appSignInService.SignInAsync(session);
-                    return RedirectToAction("Index", "Home");
+                    try
+                    {
+                        await _appSignInService.SignInAsync(session);
+                        return RedirectToAction("Index", "Home");
+                    }
+                    catch (Exception e)
+                    {
+                        ModelState.AddModelError(string.Empty, "Error al inciar session en la aplicación. " + e.Message);
+                        throw;
+                    }
+                    
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                ModelState.AddModelError(string.Empty, "Credenciales inválidas. Por favor, inténtelo de nuevo.");
+                ModelState.AddModelError(string.Empty, $"Hay Credenciales inválidas. Por favor, inténtelo de nuevo. {ex}");
             }
             return View("Login", user);
-        }
-
-        // GET: /register
-        [HttpGet]
-        [Route("register")]
-        public IActionResult Register()
-        {
-            return View();
-        }
-
-        // POST: /register
-        [HttpPost]
-        [Route("register")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ProcessRegister(UserModel user)
-        {
-            if (!ModelState.IsValid)
-                return View("Login", user);
-        
-            if (!IsPaswordStrong(user.Password))
-            {
-                ModelState.AddModelError(string.Empty, "La contraseña no cumple con los requisitos de seguridad.");
-                return View("Register", user);
-            }
-        
-            var session = await _supabaseAuthService.RegisterUserAsync(user);
-        
-            if (session?.User != null && !string.IsNullOrEmpty(session.AccessToken))
-            {
-                await _appSignInService.SignInAsync(session);
-                return RedirectToAction("Index", "Home");
-            }
-        
-            ModelState.AddModelError(string.Empty, "Error al registrar el usuario. Por favor, inténtelo de nuevo.");
-            return View("Register", user);
         }
 
         // GET: /forgot-password
         [HttpGet]
         [Route("forgot-password")]
-        public IActionResult ForgotPassword()
-        {
-            return View();
-        }
+        public IActionResult ForgotPassword() => View();
 
         // POST: /forgot-password
         [HttpPost]
@@ -113,19 +79,23 @@ namespace OrdexIn.Controllers
                 ModelState.AddModelError(string.Empty, "El correo es requerido.");
                 return View("ForgotPassword");
             }
+            try
+            {
+                await _supabaseAuthService.SendPasswordResetEmailAsync(new UserModel { Email = email });
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, "Error sending password reset email, try again in 10 seconds." + ex);
+                return View("ForgotPassword", new UserModel { Email = email });
+            }
             
-            TempData["InfoMessage"] = "Si el correo existe, recibirás instrucciones para restablecer la contraseña.";
-            await _supabaseAuthService.SendPasswordResetEmailAsync(new UserModel { Email = email });
             return RedirectToAction("Login");
         }
 
         // GET: /reset-password
         [HttpGet]
         [Route("reset-password")]
-        public IActionResult ResetPassword()
-        {
-            return View();
-        }
+        public IActionResult ResetPassword() => View();
 
         // POST: /reset-password
         [HttpPost]
@@ -165,7 +135,7 @@ namespace OrdexIn.Controllers
                 if (success)
                 {
                     TempData["InfoMessage"] = "Contraseña actualizada correctamente. Por favor, inicie sesión.";
-                    return RedirectToAction("Login");
+                    return RedirectToAction("ResetPassword");
                 }
 
                 // Console.WriteLine("[ResetPassword] ResetPasswordAsync returned false - password not updated.");
@@ -199,7 +169,7 @@ namespace OrdexIn.Controllers
             return Redirect("/login");
         }
         
-        private bool IsPaswordStrong(string password)
+        private static bool IsPaswordStrong(string password)
         {
             return password.Length >= 8
                 && password.Any(char.IsUpper)

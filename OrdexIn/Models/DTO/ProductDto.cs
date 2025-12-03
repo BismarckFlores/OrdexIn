@@ -1,0 +1,14 @@
+using System.Text.Json.Serialization;
+
+namespace OrdexIn.Models.DTO;
+
+public class ProductDto
+{
+    public int Id { get; set; }
+    public string? Name { get; set; }
+    public decimal Price { get; set; }
+    public int Stock { get; set; }
+    
+    [JsonPropertyName("minStock")]
+    public int MinStock { get; set; }
+}

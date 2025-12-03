@@ -1,0 +1,42 @@
+@* file: `Views/Product/Details.cshtml` *@
+@model OrdexIn.Models.DTO.ProductDetailsDto
+
+<div class="app-card" style="padding:18px; margin-bottom:18px;">
+    <h1 class="page-title"><i class = "fa fa-box-open"></i> Detalles — @Model.ProductModel.Name</h1>
+
+    <!-- Single-product shown as the same card-like table used in Index -->
+    <div class="table-responsive app-table-container app-card" style="padding:12px; margin-bottom:12px;">
+        <table class="products-table" role="table" aria-label="Product summary">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Precio</th>
+                <th>Stock</th>
+                <th>Stock Minimo</th>
+                <th>Acciones</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>@Model.ProductModel.Id</td>
+                <td>@Model.ProductModel.Name</td>
+                <td>@Model.ProductModel.Price</td>
+                <td style="text-align:center;">@Model.ProductModel.Stock</td>
+                <td style="text-align:center;">@Model.ProductModel.StockMin</td> <td style="display:flex;gap:8px;justify-content:flex-end;">
+                    <a class="detailsBtn btn" href="@Url.Action("Index", "Product")" role="button" aria-label="Back to products">Back</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2 style="margin-top:6px;"><i class = "fa fa-clipboard-list"></i> Lotes</h2>
+        <div id="lotsContainer" data-product-id="@Model.ProductModel.Id" aria-live="polite">Loading lots...</div>
+
+    <p style="margin-top:12px;"><a href="@Url.Action("Index", "Product")">Back to products</a></p>
+</div>
+
+@section Scripts {
+    <script src = "~/js/details.js" asp-append-version="true"></script>
+}

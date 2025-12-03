@@ -1,13 +1,36 @@
-﻿<!DOCTYPE html>
+﻿@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@{
+    var csrfToken = Antiforgery.GetAndStoreTokens(ViewContext.HttpContext).RequestToken;
+}
+@functions {
+    private string NavActive(string controller, string action = null)
+    {
+        var routeController = ViewContext.RouteData.Values["controller"]?.ToString();
+        var routeAction = ViewContext.RouteData.Values["action"]?.ToString();
+
+        if (!string.IsNullOrEmpty(action))
+        {
+            return string.Equals(routeController, controller, StringComparison.OrdinalIgnoreCase)
+                   && string.Equals(routeAction, action, StringComparison.OrdinalIgnoreCase)
+                ? "active"
+                : "";
+        }
+
+        return string.Equals(routeController, controller, StringComparison.OrdinalIgnoreCase) ? "active" : "";
+    }
+}
+
+<!DOCTYPE html>
 <html lang = "es">
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>@ViewData["Title"]</title>
-    
     <link rel="stylesheet" href="~/css/account.css"/>
     <link rel="stylesheet" href="~/css/site.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <meta name="csrf-token" content="@csrfToken" />
     
     @await RenderSectionAsync("styles", required: false)
 </head>
@@ -27,30 +50,45 @@
 
             <div class="nav-menu-top">
                 <nav class="nav flex-column mt-4">
-                    <div class="nav-item">
-                        <a class="nav-link active" asp-area="" asp-controller="Home" asp-action="Index">
+                    <li class="nav-item">
+                        <a class='nav-link @(NavActive("Home","Index"))' asp-area="" asp-controller="Home" asp-action="Index">
                             <i class="fas fa-home"></i> <span>Dashboard</span>
                         </a>
-                    </div>
-                    <div class="nav-item">
-                        <a class="nav-link" asp-area="" asp-controller="Inventory" asp-action="Index">
+                    </li>
+                    <li class="nav-item">
+                        <a class='nav-link @(NavActive("Product","Index"))' asp-area="" asp-controller="Product" asp-action="Index">
                             <i class="fas fa-boxes"></i> <span>Inventario</span>
                         </a>
-                    </div>
-                    <div class="nav-item">
-                        <a class="nav-link" asp-area="" asp-controller="Management" asp-action="Index">
-                            <i class="fas fa-cogs"></i> <span>Managment</span>
-                        </a>
-                    </div>
+                    </li>
+                    @if (User.IsInRole("admin"))
+                    {
+                        <hr class="mb-5"/>
+                        <div class="sidebar-header">
+                            <h3>Opciones de Administrador</h3>
+                            <hr />
+                        </div>
+                        <li class="nav-item">
+                            <a class='nav-link @(NavActive("Management", "Index"))' asp-area="" asp-controller="Management" asp-action="Index">
+                                <i class="fas fa-clipboard-list"></i> <span>Historial</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class='nav-link @(NavActive("Management", "Users"))' asp-area="" asp-controller="Management" asp-action="Users">
+                                <i class="fas fa-users-cog"></i> <span>Usuarios</span>
+                            </a>
+                        </li>
+                    }
                 </nav>
             </div>
                 
             <div class="sidebar-footer">
-                <button class="btn-logout" id="logoutButton" type="button">
-                    <i class="fas fa-sign-out-alt"></i> <span>Cerrar Sesión</span>
-                </button>
+                <form asp-controller="Account" asp-action="Logout" method="post" style="width:100%; margin:0;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn-logout" style="width:100%; display:flex; align-items:center; gap:12px;">
+                        <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+                    </button>
+                </form>
             </div>
-
         </aside>
 
         <main role="main" class="main-content">
@@ -62,7 +100,10 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 
-    <script src="~/js/site.js"></script> 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js"></script>
+
+    <script src="~/js/site.js"></script>
+    <script src="~/js/autoLogout.js"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

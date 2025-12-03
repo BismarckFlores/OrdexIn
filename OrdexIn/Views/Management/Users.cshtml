@@ -1,0 +1,32 @@
+<!-- Razor - file: `OrdexIn/Views/Management/Users.cshtml` -->
+@{
+ViewData["Title"] = "Users Management";
+}
+<div class="app-card" style="padding:18px; margin-bottom:18px;">
+    <h1 class="page-title"><i class="fa fa-users"></i> Users</h1>
+
+    <div class="users-actions" style="margin-bottom:12px;">
+        <button id="addUserBtn" class="btn btn-primary"><i class="fa fa-plus-circle"></i> Add User</button>
+        <div style="margin-left:auto;" id="usersMeta" class="users-meta" aria-live="polite">Loading...</div>
+    </div>
+
+    <div class="table-responsive app-table-container app-card" style="padding:12px;">
+        <table class="users-table" role="table" aria-label="Users" style="width:100%;">
+            <thead>
+            <tr>
+                <th>Email</th>
+                <th>Role</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr><td colspan="2"><i class="fa fa-clock-four"></i> Loading users...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>window.appBasePath = '@Url.Content("~")';</script>
+    <script src="~/js/signup-validation.js" asp-append-version="true"></script>
+    <script src="~/js/users.js" asp-append-version="true"></script>
+}
