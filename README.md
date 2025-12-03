@@ -6,7 +6,8 @@
 ![ASP.NET Core](https://img.shields.io/badge/ASP.NET%20Core-MVC-blue?style=for-the-badge&logo=dot-net)
 ![SignalR](https://img.shields.io/badge/SignalR-realtime-green?style=for-the-badge)
 ![Bootstrap](https://img.shields.io/badge/Bootstrap-5-blueviolet?style=for-the-badge&logo=bootstrap)
-
+![Supabase](https://img.shields.io/badge/Supabase-database-00bfff?style=for-the-badge&logo=supabase)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/BismarckFlores/OrdexIn)
 
 ## 📖 Manual de uso
 

@@ -195,18 +195,27 @@
             <h2>Agregar Producto</h2>
             <label>Name<br/><input id="m_name" class="form-control" /></label><br/>
             <label>Price<br/><input id="m_price" class="form-control" type="number" step="0.01" /></label><br/>
-            <label>Stock<br/><input id="m_stock" class="form-control" type="number" /></label><br/>
             <label>Stock Minimo<br/><input id="m_stockmin" class="form-control" type="number" /></label>
+            <hr class="mb-5"/>
+            <h3>Lote inicial del producto</h3>
+            <label>Cantidad<br/><input id="m_stock" class="form-control" type="number" /></label><br/>
+            <label>Fecha de expiración<br/><input id="m_exp" class="form-control" type="date" /></label>
             <div style="margin-top:12px;"><button id="m_save" class="btn btn-primary">Save</button> <button id="m_cancel" class="btn">Cancel</button></div>
         `;
         const overlay = createModal(html);
         overlay.querySelector('#m_cancel').addEventListener('click', () => closeModal(overlay));
         overlay.querySelector('#m_save').addEventListener('click', async () => {
+            const name = overlay.querySelector('#m_name').value;
+            const price = parseFloat(overlay.querySelector('#m_price').value || 0);
+            const stock = parseInt(overlay.querySelector('#m_stock').value || 0, 10);
+            const minStock = parseInt(overlay.querySelector('#m_stockmin').value || 0, 10);
+            const expVal = overlay.querySelector('#m_exp').value;
             const dto = {
-                name: overlay.querySelector('#m_name').value,
-                price: parseFloat(overlay.querySelector('#m_price').value || 0),
-                stock: parseInt(overlay.querySelector('#m_stock').value || 0, 10),
-                minStock: parseInt(overlay.querySelector('#m_stockmin').value || 0, 10)
+                name: name,
+                price: price,
+                stock: stock,
+                minStock: minStock,
+                expirationDate: expVal ? new Date(expVal).toISOString() : null
             };
             try {
                 await apiPost('/api/product', dto);
