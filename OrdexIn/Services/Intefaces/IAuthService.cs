@@ -1,7 +1,7 @@
 ﻿using OrdexIn.Models;
 using Supabase.Gotrue;
 
-namespace OrdexIn.Services
+namespace OrdexIn.Services.Intefaces
 {
     public interface IAuthService
     {
@@ -13,6 +13,6 @@ namespace OrdexIn.Services
         Task LogoutAsync();
 
         Task<string> GetUserEmailAsync(Guid userId);
-        Task<List<UserModel>> GetAllUsersAsync();
+        Task<List<ProfileModel>> GetAllUsersAsync();
     }
 }

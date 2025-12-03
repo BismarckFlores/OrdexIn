@@ -18,12 +18,30 @@ builder.Services.AddControllersWithViews();
 // SignalR
 builder.Services.AddSignalR();
 
+// Antiforgery header name (optional - matches JS header)
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "RequestVerificationToken";
+});
+
 // Authentication cookies
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
         options.LoginPath = "/login";
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(30); // session lifetime
+        options.SlidingExpiration = true;                  // extend on activity
+        options.Cookie.HttpOnly = true;
+        options.Cookie.IsEssential = true;
     });
+
+// Session (server-side idle timeout)
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(20);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 
 // Global authorization requirement
 builder.Services.AddAuthorization(options =>
@@ -79,6 +97,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseSession(); // enable session middleware before auth (if needed by app)
 app.UseAuthentication();
 app.UseAuthorization();
 

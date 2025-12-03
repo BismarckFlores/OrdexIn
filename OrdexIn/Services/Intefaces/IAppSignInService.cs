@@ -1,6 +1,6 @@
 ﻿using Supabase.Gotrue;
 
-namespace OrdexIn.Services
+namespace OrdexIn.Services.Intefaces
 {
     public interface IAppSignInService
     {

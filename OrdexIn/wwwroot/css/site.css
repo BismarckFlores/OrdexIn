@@ -1057,3 +1057,82 @@ body.sidebar-closed .main-content {
     gap: 8px;
   }
 }
+
+/* css */
+/* append to end of file: `OrdexIn/wwwroot/css/site.css` */
+/* Styles for users-table to match products-table card-like display */
+
+.users-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 12px;
+}
+
+/* Header as card */
+.users-table thead {
+  display: block;
+  margin: 0 6px 12px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(2,6,23,0.12);
+}
+.users-table thead tr {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 0;
+}
+.users-table thead th {
+  padding: 10px 12px;
+  color: var(--muted);
+  font-weight: 700;
+  text-align: left;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  background: transparent;
+}
+
+/* Body rows as cards */
+.users-table tbody { display: block; }
+.users-table tbody tr {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.02));
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: 0 8px 24px rgba(2,6,23,0.35);
+  margin: 0 6px;
+}
+.users-table tbody tr td {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  padding: 6px 8px;
+  border: none;
+  color: var(--text);
+  min-width: 0;
+}
+
+/* Column sizing: 1 Email (flex), 2 Role (fixed) */
+.users-table thead th:nth-child(1),
+.users-table tbody tr td:nth-child(1) { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.users-table thead th:nth-child(2),
+.users-table tbody tr td:nth-child(2) { flex: 0 0 120px; width: 120px; text-align: center; }
+
+/* Responsive: stack on small screens */
+@media (max-width: 760px) {
+  .users-table thead { display: none; }
+  .users-table tbody tr {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    margin: 0 6px 12px;
+  }
+  .users-table tbody tr td { width: 100%; display: flex; justify-content: space-between; padding: 8px 10px; }
+  .users-table tbody tr td:nth-child(2) { justify-content: flex-start; }
+}

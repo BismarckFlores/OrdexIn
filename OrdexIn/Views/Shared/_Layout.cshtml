@@ -1,4 +1,8 @@
-﻿@functions {
+﻿@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@{
+    var csrfToken = Antiforgery.GetAndStoreTokens(ViewContext.HttpContext).RequestToken;
+}
+@functions {
     private string NavActive(string controller, string action = null)
     {
         var routeController = ViewContext.RouteData.Values["controller"]?.ToString();
@@ -25,6 +29,8 @@
     <link rel="stylesheet" href="~/css/account.css"/>
     <link rel="stylesheet" href="~/css/site.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <meta name="csrf-token" content="@csrfToken" />
     
     @await RenderSectionAsync("styles", required: false)
 </head>
@@ -56,9 +62,15 @@
                     </li>
                     @if (User.IsInRole("admin"))
                     {
+                        <hr class="mb-5"/>
                         <li class="nav-item">
                             <a class='nav-link @(NavActive("Management", "Index"))' asp-area="" asp-controller="Management" asp-action="Index">
                                 <i class="fas fa-clipboard-list"></i> <span>Historial</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class='nav-link @(NavActive("Management", "Users"))' asp-area="" asp-controller="Management" asp-action="Users">
+                                <i class="fas fa-users-cog"></i> <span>Usuarios</span>
                             </a>
                         </li>
                     }
@@ -66,14 +78,13 @@
             </div>
                 
             <div class="sidebar-footer">
-                <form id="logoutTokenForm" asp-controller="Auth" asp-action="Logout" method="post" style="display:inline">
+                <form asp-controller="Account" asp-action="Logout" method="post" style="width:100%; margin:0;">
                     @Html.AntiForgeryToken()
-                    <button id="logoutBtn" class="btn-logout" type="button">
-                        <i class="fas fa-sign-out-alt"></i> <span>Cerrar Sesión</span>
+                    <button type="submit" class="btn-logout" style="width:100%; display:flex; align-items:center; gap:12px;">
+                        <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
                     </button>
                 </form>
             </div>
-
         </aside>
 
         <main role="main" class="main-content">
@@ -87,9 +98,8 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js"></script>
 
-    <script src="~/js/site.js"></script> 
-
-    <script src = "~/js/auth.js"></script>
+    <script src="~/js/site.js"></script>
+    <script src="~/js/autoLogout.js"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

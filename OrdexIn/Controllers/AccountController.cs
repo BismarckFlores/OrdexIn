@@ -1,8 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using OrdexIn.Models;
-using OrdexIn.Services;
+using OrdexIn.Services.Intefaces;
 
 namespace OrdexIn.Controllers
 {
@@ -20,25 +19,15 @@ namespace OrdexIn.Controllers
             _logger = logger;
         }
         
-        public IActionResult Index()
-        {
-            // Redirige directamente al path de login configurado en Cookie options
-            return Redirect("/login");
-        }
+        public IActionResult Index() => Redirect("/login");
 
         [Route("expired")]
-        public IActionResult Expired()
-        {
-            return View();
-        }
+        public IActionResult Expired() => View();
 
         // GET: /login - muestra la página de login (necesario para que la cookie middleware pueda redirigir con GET)
         [HttpGet]
         [Route("login")]
-        public IActionResult Login()
-        {
-            return View();
-        }
+        public IActionResult Login() => View();
 
         // POST: /login - procesa el envío del formulario de login
         [HttpPost]
@@ -74,48 +63,10 @@ namespace OrdexIn.Controllers
             return View("Login", user);
         }
 
-        // GET: /register
-        [HttpGet]
-        [Route("register")]
-        public IActionResult Register()
-        {
-            return View();
-        }
-
-        // POST: /register
-        [HttpPost]
-        [Route("register")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ProcessRegister(UserModel user)
-        {
-            if (!ModelState.IsValid)
-                return View("Login", user);
-        
-            if (!IsPaswordStrong(user.Password))
-            {
-                ModelState.AddModelError(string.Empty, "La contraseña no cumple con los requisitos de seguridad.");
-                return View("Register", user);
-            }
-        
-            var session = await _supabaseAuthService.RegisterUserAsync(user, true);
-        
-            if (session?.User != null && !string.IsNullOrEmpty(session.AccessToken))
-            {
-                await _appSignInService.SignInAsync(session);
-                return RedirectToAction("Index", "Home");
-            }
-        
-            ModelState.AddModelError(string.Empty, "Error al registrar el usuario. Por favor, inténtelo de nuevo.");
-            return View("Register", user);
-        }
-
         // GET: /forgot-password
         [HttpGet]
         [Route("forgot-password")]
-        public IActionResult ForgotPassword()
-        {
-            return View();
-        }
+        public IActionResult ForgotPassword() => View();
 
         // POST: /forgot-password
         [HttpPost]
@@ -144,10 +95,7 @@ namespace OrdexIn.Controllers
         // GET: /reset-password
         [HttpGet]
         [Route("reset-password")]
-        public IActionResult ResetPassword()
-        {
-            return View();
-        }
+        public IActionResult ResetPassword() => View();
 
         // POST: /reset-password
         [HttpPost]
@@ -221,7 +169,7 @@ namespace OrdexIn.Controllers
             return Redirect("/login");
         }
         
-        private bool IsPaswordStrong(string password)
+        private static bool IsPaswordStrong(string password)
         {
             return password.Length >= 8
                 && password.Any(char.IsUpper)

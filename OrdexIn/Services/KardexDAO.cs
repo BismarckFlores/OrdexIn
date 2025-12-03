@@ -68,9 +68,9 @@ public class KardexDAO : IKardexDataService
         string? productName = null, int? batchId = null, int? quantity = null, decimal? unitCost = null,
         DateTime? expiration = null)
     {
-        // If caller didn't provide a reason, generate a short one automatically.
+        // If caller didn't provide a reason, generate a short one automatically (MOD always generate).
         var autoReason = GenerateShortReason(transectionType, productId, productName, batchId, quantity);
-        var finalReason = string.IsNullOrWhiteSpace(reason) ? autoReason : reason;
+        var finalReason = transectionType == "MOD" ? autoReason : string.IsNullOrWhiteSpace(reason) ? autoReason : reason;
 
         var entry = new KardexModel
         {
@@ -90,8 +90,8 @@ public class KardexDAO : IKardexDataService
         int? batchId = null, DateTime? expiration = null)
     {
         var autoReason = GenerateShortReason(transectionType, productId, productName, batchId, quantitySold);
-        var finalReason = string.IsNullOrWhiteSpace(reason) ? autoReason : reason;
-
+        var finalReason = transectionType == "MOD" ? autoReason : string.IsNullOrWhiteSpace(reason) ? autoReason : reason;
+        
         var entry = new KardexModel
         {
             TransactionType = transectionType,
@@ -112,7 +112,7 @@ public class KardexDAO : IKardexDataService
     private static string GenerateShortReason(string transactionType, int? productId = null,
         string? productName = null, int? batchId = null, int? quantity = null)
     {
-        string prodPart = productId.HasValue ? $"{{#{productId.Value}, {productName}}}" : (productName != null ? $"{{{productName}}}" : "producto");
+        var prodPart = productId.HasValue ? $"{{#{productId.Value}, {productName}}}" : (productName != null ? $"{{{productName}}}" : "producto");
 
         switch (transactionType)
         {

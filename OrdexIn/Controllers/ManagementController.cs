@@ -14,10 +14,8 @@ namespace OrdexIn.Controllers
             _kardexService = kardexService;
         }
 
-        // GET: KardexController
-        public ActionResult Index()
-        {
-            return View();
-        }
+        public ActionResult Index() => View();
+        
+        public ActionResult Users() => View();
     }
 }

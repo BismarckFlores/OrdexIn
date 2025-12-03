@@ -16,10 +16,7 @@ namespace OrdexIn.Controllers
         }
         
         // GET: ProductController
-        public ActionResult Index()
-        {
-            return View();
-        }
+        public ActionResult Index() => View();
 
         // GET: /Product/Details/5
         public ActionResult Details(int id)

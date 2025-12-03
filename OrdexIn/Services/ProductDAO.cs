@@ -262,7 +262,7 @@ namespace OrdexIn.Services
             }
         }
         
-        private async Task<T> ExecuteWithRetry<T>(Func<Task<T>> operation)
+        private static async Task<T> ExecuteWithRetry<T>(Func<Task<T>> operation)
         {
             var attempts = 0;
             var delayMs = 200;
