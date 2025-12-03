@@ -63,6 +63,10 @@
                     @if (User.IsInRole("admin"))
                     {
                         <hr class="mb-5"/>
+                        <div class="sidebar-header">
+                            <h3>Opciones de Administrador</h3>
+                            <hr />
+                        </div>
                         <li class="nav-item">
                             <a class='nav-link @(NavActive("Management", "Index"))' asp-area="" asp-controller="Management" asp-action="Index">
                                 <i class="fas fa-clipboard-list"></i> <span>Historial</span>
